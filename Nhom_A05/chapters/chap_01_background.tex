@@ -1,0 +1,25 @@
+\chapter{Tổng quan và cơ sở lý thuyết}
+
+\section{Tổng quan về an toàn mạng và bài toán phát hiện xâm nhập}
+
+An toàn mạng là lĩnh vực nghiên cứu các phương pháp bảo vệ hệ thống mạng khỏi các hành vi truy cập trái phép, phá hoại hoặc đánh cắp thông tin. Trong đó, hệ thống phát hiện xâm nhập (Intrusion Detection System -- IDS) đóng vai trò giám sát lưu lượng mạng hoặc hoạt động hệ thống nhằm phát hiện các dấu hiệu tấn công. Dựa trên phạm vi giám sát, IDS được chia thành hai nhóm chính: hệ thống phát hiện xâm nhập trên máy chủ (Host-based IDS -- HIDS), giám sát hoạt động trên từng máy đơn lẻ; và hệ thống phát hiện xâm nhập trên mạng (Network-based IDS -- NIDS), giám sát lưu lượng truyền qua hạ tầng mạng. Đề tài tập trung vào hướng NIDS.
+
+Về phương pháp tiếp cận, IDS truyền thống thường dựa trên tập luật (rule-based) hoặc trích xuất đặc trưng thống kê từ luồng mạng (flow-based) kết hợp với các mô hình học máy như Random Forest, XGBoost. Các phương pháp này xử lý mỗi luồng kết nối như một mẫu dữ liệu độc lập, không khai thác được mối quan hệ giữa các thực thể trong mạng~\cite{bilot2023gnnids} -- một hạn chế đáng kể khi đối mặt với các hình thức tấn công có tính chất quan hệ như trinh sát mạng (port scanning) hay tấn công phân tán.
+
+\section{Cơ sở lý thuyết về mạng nơ-ron đồ thị}
+
+\subsection{Biểu diễn dữ liệu mạng dưới dạng đồ thị}
+
+Một đồ thị (graph) được định nghĩa bởi tập đỉnh (node) và tập cạnh (edge) biểu diễn quan hệ giữa các đỉnh. Trong bài toán phát hiện xâm nhập mạng, dữ liệu luồng mạng có thể được biểu diễn tự nhiên dưới dạng đồ thị, trong đó mỗi đỉnh tương ứng với một thực thể mạng (địa chỉ IP, thiết bị), và mỗi cạnh tương ứng với một kết nối hoặc luồng dữ liệu giữa hai thực thể. Các đặc trưng thống kê trích xuất từ luồng mạng (thời lượng kết nối, số byte truyền, giao thức...) được gán làm thuộc tính cho cạnh hoặc đỉnh tương ứng, cho phép mô hình khai thác cả đặc trưng riêng lẻ lẫn cấu trúc quan hệ giữa các thực thể trong mạng.
+
+\subsection{Nguyên lý hoạt động của mạng nơ-ron đồ thị}
+
+Mạng nơ-ron đồ thị (Graph Neural Network -- GNN) là một lớp mô hình học sâu được thiết kế để học biểu diễn trên dữ liệu có cấu trúc đồ thị. Nguyên lý cốt lõi của GNN là cơ chế truyền và tổng hợp thông tin (message passing), theo đó biểu diễn của mỗi đỉnh được cập nhật lặp lại qua nhiều lớp mạng dựa trên thông tin tổng hợp từ các đỉnh lân cận, cho phép mô hình học được cả đặc trưng cục bộ lẫn ngữ cảnh cấu trúc của toàn đồ thị.
+
+Ba kiến trúc GNN tiêu biểu được đề tài xem xét gồm: mạng tích chập đồ thị (Graph Convolutional Network -- GCN)~\cite{kipf2017gcn}, thực hiện tổng hợp thông tin từ đỉnh lân cận với trọng số xác định dựa trên bậc của đỉnh; mạng đồ thị có cơ chế chú ý (Graph Attention Network -- GAT)~\cite{velickovic2018gat}, sử dụng cơ chế tự chú ý để học trọng số đóng góp của từng đỉnh lân cận một cách có chọn lọc; và GraphSAGE (Graph SAmple and aggreGatE)~\cite{hamilton2017graphsage}, lấy mẫu một số lượng cố định đỉnh lân cận nhằm cải thiện khả năng suy diễn trên đỉnh mới và mở rộng tốt hơn trên đồ thị lớn.
+
+Đối với bài toán phát hiện xâm nhập mạng, thông tin cần phân loại thường gắn với cạnh (kết nối giữa hai thực thể) hơn là đỉnh, do đó bài toán được xây dựng dưới dạng phân loại cạnh (edge classification): biểu diễn của một cạnh được suy ra từ biểu diễn của hai đỉnh liên kết, làm cơ sở để dự đoán một kết nối là bình thường hay bị tấn công.
+
+\section{Các nghiên cứu liên quan}
+
+Hướng ứng dụng GNN vào phát hiện xâm nhập mạng đã được đề cập trong một số nghiên cứu gần đây~\cite{bilot2023gnnids, caville2023anomale}, cho thấy tiềm năng cải thiện hiệu năng so với các phương pháp học máy truyền thống nhờ khả năng khai thác cấu trúc quan hệ giữa các thực thể mạng. Tuy nhiên, theo khảo sát của Zhong và cộng sự~\cite{zhong2024survey}, phần lớn các nghiên cứu hiện có tập trung đề xuất một kiến trúc GNN cụ thể, chưa thực hiện đánh giá so sánh có hệ thống giữa nhiều kiến trúc trên cùng điều kiện thực nghiệm. Đây là khoảng trống mà đề tài hướng tới bổ sung.

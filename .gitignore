@@ -1,0 +1,48 @@
+# Data (nặng, không version control — nguồn thật nằm ở Google Drive)
+data/raw/**
+data/processed/**
+!data/raw/README.md
+!data/processed/README.md
+
+# Kết quả nặng (giữ bảng/hình nhỏ nếu cần, bỏ export lớn)
+results/*.csv
+results/*.parquet
+results/mlruns/
+
+# MLflow / checkpoint
+mlruns/
+mlartifacts/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Env / secrets
+.env
+*.token
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# LaTeX build artifacts
+Nhom_A05/**/*.aux
+Nhom_A05/**/*.log
+Nhom_A05/**/*.out
+Nhom_A05/**/*.toc
+Nhom_A05/**/*.lof
+Nhom_A05/**/*.lot
+Nhom_A05/**/*.bbl
+Nhom_A05/**/*.blg
+Nhom_A05/**/*.synctex.gz

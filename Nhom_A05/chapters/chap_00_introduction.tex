@@ -1,0 +1,42 @@
+\chapter*{MỞ ĐẦU}
+\addcontentsline{toc}{chapter}{Mở đầu}
+
+\section*{Lý do chọn đề tài}
+
+Các phương pháp học máy truyền thống (Random Forest, XGBoost) khi áp dụng cho phát hiện xâm nhập mạng thường xử lý mỗi kết nối như một mẫu dữ liệu độc lập, bỏ qua quan hệ cấu trúc giữa các thực thể mạng. Trong khi đó, nhiều dạng tấn công -- đặc biệt là trinh sát (port scanning) hay tấn công phân tán -- thể hiện rõ đặc điểm quan hệ, có thể mô hình hóa tự nhiên dưới dạng đồ thị. Mạng nơ-ron đồ thị (Graph Neural Network -- GNN) là hướng tiếp cận học sâu cho dữ liệu có cấu trúc đồ thị, cho phép khai thác cả đặc trưng riêng lẫn thông tin lan truyền từ các thực thể lân cận. Xuất phát từ tiềm năng đó, đề tài \textit{"Nghiên cứu và ứng dụng mạng nơ-ron đồ thị vào phát hiện xâm nhập mạng"} được lựa chọn nhằm tìm hiểu nguyên lý hoạt động của GNN và đánh giá thực nghiệm hiệu quả của phương pháp này.
+
+\section*{Mục tiêu nghiên cứu}
+
+\begin{itemize}
+  \item Tìm hiểu tổng quan về an toàn mạng và các hình thức xâm nhập mạng phổ biến.
+  \item Nghiên cứu cách biểu diễn luồng dữ liệu mạng dưới dạng đồ thị và nguyên lý hoạt động của GNN.
+  \item Xây dựng quy trình tiền xử lý dữ liệu và chuyển đổi sang biểu diễn đồ thị.
+  \item Xây dựng, huấn luyện mô hình GNN phân loại kết nối mạng bình thường/bị tấn công.
+  \item Đánh giá và so sánh hiệu năng mô hình với các phương pháp học máy truyền thống.
+\end{itemize}
+
+\section*{Tình hình nghiên cứu}
+
+Ứng dụng GNN vào phát hiện xâm nhập mạng đã thu hút sự quan tâm nghiên cứu trong những năm gần đây. Bilot và cộng sự~\cite{bilot2023gnnids} thực hiện khảo sát tổng quan đầu tiên về hướng này; Caville và cộng sự~\cite{caville2023anomale} đề xuất phương pháp học tự giám sát dựa trên GNN để phát hiện bất thường mạng. Khảo sát gần đây của Zhong và cộng sự~\cite{zhong2024survey} chỉ ra phần lớn nghiên cứu hiện có tập trung một kiến trúc GNN cụ thể, còn thiếu đánh giá so sánh có hệ thống giữa nhiều kiến trúc -- đây là khoảng trống đề tài hướng tới bổ sung.
+
+\section*{Đối tượng và phạm vi nghiên cứu}
+
+\textbf{Đối tượng:} các kiến trúc mạng nơ-ron đồ thị áp dụng cho phát hiện xâm nhập mạng dựa trên luồng dữ liệu.
+
+\textbf{Phạm vi:} phát hiện xâm nhập ở mức mạng (Network-based IDS), sử dụng dữ liệu luồng mạng công khai đã chuẩn hóa; không đi sâu vào Host-based IDS.
+
+\section*{Phương pháp nghiên cứu}
+
+Đề tài sử dụng phương pháp nghiên cứu ứng dụng kết hợp thực nghiệm so sánh, gồm bốn bước: (1) khảo sát lý thuyết về an toàn mạng và GNN; (2) xây dựng dữ liệu -- tiền xử lý và chuyển đổi sang biểu diễn đồ thị; (3) xây dựng, huấn luyện mô hình GNN; (4) thực nghiệm, đánh giá và so sánh với các phương pháp học máy truyền thống.
+
+\section*{Bố cục báo cáo}
+
+Ngoài Mở đầu và Kết luận, báo cáo gồm 4 chương:
+
+\textbf{Chương 1.} Tổng quan và cơ sở lý thuyết.
+
+\textbf{Chương 2.} Phương pháp đề xuất.
+
+\textbf{Chương 3.} Triển khai.
+
+\textbf{Chương 4.} Thực nghiệm và đánh giá.

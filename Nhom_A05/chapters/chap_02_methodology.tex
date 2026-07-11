@@ -1,0 +1,19 @@
+\chapter{Phương pháp đề xuất}
+
+\section{Dữ liệu sử dụng}
+
+Đề tài sử dụng hai bộ dữ liệu công khai NF-CSE-CIC-IDS2018-v2 và NF-UNSW-NB15-v2 -- các phiên bản chuẩn hóa theo định dạng NetFlow mở rộng (43 đặc trưng) của bộ dữ liệu CSE-CIC-IDS2018 và UNSW-NB15 gốc, do Đại học Queensland (UQ) công bố~\cite{sarhan2022standard}. Cả hai bộ dữ liệu đều thuộc phiên bản V2 (NetFlow V2), đảm bảo dùng chung một khuôn đặc trưng thống nhất, thuận tiện cho việc đối chiếu kết quả giữa hai bộ dữ liệu trong quá trình thực nghiệm. Mỗi bản ghi trong bộ dữ liệu tương ứng với một luồng kết nối (flow), gồm các trường định danh (địa chỉ IP nguồn/đích, cổng nguồn/đích, giao thức) và các đặc trưng thống kê của luồng (thời lượng kết nối, số byte, số gói tin truyền...), kèm nhãn phân loại bình thường hoặc tấn công.
+
+Dữ liệu được kiểm tra schema, xử lý giá trị thiếu và trùng lặp, mã hóa các trường phân loại và chuẩn hóa đặc trưng số trước khi đưa vào huấn luyện. Tập dữ liệu được chia theo tỷ lệ 70/15/15 cho huấn luyện, kiểm định và kiểm thử, sử dụng phương pháp chia theo tầng (stratified split) dựa trên nhãn nhằm đảm bảo tỷ lệ các lớp -- vốn có mức độ mất cân bằng đáng kể giữa lớp bình thường và lớp tấn công -- được giữ tương đồng giữa các tập.
+
+\section{Xây dựng biểu diễn đồ thị}
+
+Dữ liệu luồng mạng dạng bảng được chuyển đổi sang biểu diễn đồ thị theo cách tiếp cận của Lo và cộng sự~\cite{lo2022egraphsage}: với mỗi luồng kết nối, cặp (địa chỉ IP nguồn, cổng nguồn) được xác định là đỉnh nguồn, cặp (địa chỉ IP đích, cổng đích) được xác định là đỉnh đích, và bản thân luồng kết nối được biểu diễn thành một cạnh có hướng nối hai đỉnh đó. Các đặc trưng thống kê của luồng được gán làm thuộc tính cạnh (edge feature), trong khi thuộc tính đỉnh được tính toán bổ sung từ các đặc trưng cấu trúc của đồ thị, bao gồm bậc vào, bậc ra và hệ số phân cụm (clustering coefficient) của từng đỉnh.
+
+Toàn bộ quy trình xây dựng đồ thị được kiểm tra thông qua bộ kiểm thử đơn vị nhằm xác minh tính đúng đắn của đồ thị sinh ra, bao gồm việc đối chiếu số lượng đỉnh/cạnh và tính nhất quán của thuộc tính gán cho từng thành phần so với dữ liệu gốc.
+
+\section{Kiến trúc mô hình đề xuất}
+
+Do nhãn cần dự đoán gắn với từng luồng kết nối, bài toán được xây dựng dưới dạng phân loại cạnh (edge classification): mô hình học biểu diễn cho từng đỉnh thông qua cơ chế truyền và tổng hợp thông tin đã trình bày ở Chương 1, sau đó biểu diễn của một cạnh được suy ra từ biểu diễn của hai đỉnh liên kết, làm đầu vào cho một lớp phân loại nhị phân (bình thường/bị tấn công).
+
+Đề tài xây dựng và huấn luyện hai kiến trúc mạng nơ-ron đồ thị -- GCN~\cite{kipf2017gcn} và GAT~\cite{velickovic2018gat} -- trên cùng quy trình xử lý dữ liệu và cấu hình thực nghiệm, nhằm so sánh hiệu quả giữa cơ chế tổng hợp thông tin dựa trên bậc đỉnh (GCN) và cơ chế tổng hợp có trọng số học được thông qua attention (GAT). Siêu tham số của từng mô hình (tốc độ học, số lớp, kích thước lớp ẩn, tỷ lệ dropout) được tối ưu bằng công cụ Optuna, toàn bộ quá trình thực nghiệm được ghi nhận trên MLflow để đảm bảo khả năng theo dõi và tái lập kết quả.
