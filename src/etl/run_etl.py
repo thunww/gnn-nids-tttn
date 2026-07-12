@@ -1,3 +1,4 @@
+import gc
 import json
 import sys
 from pathlib import Path
@@ -32,6 +33,9 @@ def run(raw_dir: Path, processed_dir: Path) -> None:
             for c in df.columns
             if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, "Attack_encoded"]
         ]
+        del df
+        gc.collect()
+
         train, val, test, scaler = fit_scale(train, val, test, feature_cols)
 
         out_dir = processed_dir / folder_name
@@ -47,6 +51,9 @@ def run(raw_dir: Path, processed_dir: Path) -> None:
 
         print(f"  train={len(train)} val={len(val)} test={len(test)}")
         print(f"  luu tai: {out_dir}")
+
+        del train, val, test, scaler
+        gc.collect()
 
 
 if __name__ == "__main__":

@@ -7,7 +7,6 @@ def clean(df: pd.DataFrame, attack_col: str) -> tuple[pd.DataFrame, dict[int, st
     df = df.dropna()
 
     encoder = LabelEncoder()
-    df = df.copy()
     df["Attack_encoded"] = encoder.fit_transform(df[attack_col])
     mapping = {int(i): label for i, label in enumerate(encoder.classes_)}
 

@@ -15,9 +15,6 @@ def fit_scale(
     tránh tràn số học.
     """
     scaler = StandardScaler()
-    train = train.copy()
-    val = val.copy()
-    test = test.copy()
 
     upper_bound = train[feature_cols].quantile(clip_quantile)
     train[feature_cols] = train[feature_cols].clip(upper=upper_bound, axis=1)
