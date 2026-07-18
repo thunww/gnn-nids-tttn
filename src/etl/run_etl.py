@@ -3,6 +3,9 @@ import json
 import sys
 from pathlib import Path
 
+# Cho phep chay truc tiep "python src/etl/run_etl.py" tu bat ky thu muc nao.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import joblib
 
 from etl.config import (
