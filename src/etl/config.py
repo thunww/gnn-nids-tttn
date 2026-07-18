@@ -3,6 +3,7 @@ from pathlib import Path
 IDENTIFIER_COLS = ["IPV4_SRC_ADDR", "L4_SRC_PORT", "IPV4_DST_ADDR", "L4_DST_PORT"]
 LABEL_COL = "Label"
 ATTACK_COL = "Attack"
+ATTACK_ENCODED_COL = "Attack_encoded"  # nhan da lop (loai tan cong cu the), dung cho ca baseline lan GNN
 
 # folder_name (trong data/raw/ và data/processed/) -> tên file csv thô
 DATASETS = {

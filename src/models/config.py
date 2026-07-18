@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from etl.config import ATTACK_COL, IDENTIFIER_COLS, LABEL_COL
+from etl.config import ATTACK_COL, ATTACK_ENCODED_COL, IDENTIFIER_COLS, LABEL_COL
 
-TARGET_COL = "Attack_encoded"  # phan loai da lop (loai tan cong cu the), theo dung pham vi nghien cuu
+TARGET_COL = ATTACK_ENCODED_COL  # phan loai da lop (loai tan cong cu the), theo dung pham vi nghien cuu
 
 NON_FEATURE_COLS = IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, TARGET_COL]
 

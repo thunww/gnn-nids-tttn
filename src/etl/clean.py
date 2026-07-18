@@ -1,13 +1,15 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
+from etl.config import ATTACK_ENCODED_COL
+
 
 def clean(df: pd.DataFrame, attack_col: str) -> tuple[pd.DataFrame, dict[int, str]]:
     df = df.drop_duplicates()
     df = df.dropna()
 
     encoder = LabelEncoder()
-    df["Attack_encoded"] = encoder.fit_transform(df[attack_col])
+    df[ATTACK_ENCODED_COL] = encoder.fit_transform(df[attack_col])
     mapping = {int(i): label for i, label in enumerate(encoder.classes_)}
 
     return df, mapping

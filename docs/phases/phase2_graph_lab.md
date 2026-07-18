@@ -29,3 +29,4 @@
 ## Vấn đề phát sinh / quyết định
 - **Hiệu năng:** `run_graph_builder.py` chạy tuần tự (1 nhân) sẽ mất 5-6 tiếng cho toàn bộ dữ liệu — chuyển sang `multiprocessing.Pool` (8 worker) đưa xuống ~30 phút. Cần giữ nguyên cách chạy trực tiếp file script (`python src/graph/run_graph_builder.py`) khi có multiprocessing trên Windows, không chạy qua `python -c "..."` (spawn method trên Windows yêu cầu entry point từ 1 file thật).
 - **Dung lượng:** `*_graphs.pt` tổng ~8.1GB (riêng `nf-cse-cic-ids2018-v2/train_graphs.pt` = 5GB), hiện chỉ có ở local, **chưa upload lên Drive** — cần trước khi train GNN ở Giai đoạn 3 trên Colab.
+- **2026-07-18 — sửa nhãn cạnh từ nhị phân sang đa lớp**, ảnh hưởng trực tiếp `build_graph.py` — cần chạy lại `run_graph_builder.py`. Chi tiết đầy đủ xem [`docs/decisions.md`](../decisions.md).

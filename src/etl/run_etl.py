@@ -10,6 +10,7 @@ import joblib
 
 from etl.config import (
     ATTACK_COL,
+    ATTACK_ENCODED_COL,
     DATASETS,
     DEFAULT_PROCESSED_DIR,
     DEFAULT_RAW_DIR,
@@ -34,7 +35,7 @@ def run(raw_dir: Path, processed_dir: Path) -> None:
         feature_cols = [
             c
             for c in df.columns
-            if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, "Attack_encoded"]
+            if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, ATTACK_ENCODED_COL]
         ]
         del df
         gc.collect()

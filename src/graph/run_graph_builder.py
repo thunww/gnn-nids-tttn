@@ -10,14 +10,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pandas as pd
 import torch
 
-from etl.config import ATTACK_COL, DATASETS, IDENTIFIER_COLS, LABEL_COL
+from etl.config import ATTACK_COL, ATTACK_ENCODED_COL, DATASETS, IDENTIFIER_COLS, LABEL_COL
 from graph.build_graph import build_graph
 from graph.config import DEFAULT_PROCESSED_DIR, WINDOW_OVERLAP, WINDOW_SIZE
 from graph.windowing import sliding_windows
 
 
 def feature_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, "Attack_encoded"]]
+    return [c for c in df.columns if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL, ATTACK_ENCODED_COL]]
 
 
 def _build_one(args: tuple[pd.DataFrame, list[str]]):
