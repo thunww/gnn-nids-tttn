@@ -4,6 +4,9 @@ data/processed/**
 !data/raw/README.md
 !data/processed/README.md
 
+# File nén (zip nguồn/kết quả dữ liệu để upload Drive — không bao giờ commit)
+*.zip
+
 # Kết quả nặng (giữ bảng/hình nhỏ nếu cần, bỏ export lớn)
 results/*.csv
 results/*.parquet
