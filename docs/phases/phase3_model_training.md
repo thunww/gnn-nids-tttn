@@ -92,6 +92,15 @@
   | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | **0.7262 (epoch 22)** — tốt nhất từ trước tới giờ | 0.5073 (epoch 9) — giảm nhẹ so với lượt 3 |
   | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | **0.1167 (epoch 1)** — sụp đổ | **0.0978** — sụp đổ hoàn toàn |
 
+- **2026-07-19 — lượt 5: sửa nguyên nhân sụp đổ** (`WINDOW_SIZE` 10.000→2.000, `EARLY_STOPPING_PATIENCE` 5→15, `LR_SCHEDULER_PATIENCE` 3→8 — chi tiết + căn cứ nghiên cứu tại [`docs/decisions.md`](../decisions.md) mục "GNN sụp đổ..."). Kết quả `val_f1_macro` tốt nhất:
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | **0.7390 (epoch 59)** — cao nhất từ trước tới giờ, gần bằng RF | **0.6751 (epoch 53)** — tăng vọt so với lượt 4 (0.51) |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | 0.4190 (epoch 28) — hồi phục từ sụp đổ, nhưng thấp hơn đỉnh lượt 3 (0.4738) | 0.3796 (epoch 27) — hồi phục, thấp hơn đỉnh lượt 3 (0.4189) |
+
+  **Đánh giá:** hết hiện tượng "sụp đổ" (all-collapse) — cả 4 mô hình học được trở lại, không còn đứng yên ở mức đoán bừa. CSE-CIC-IDS2018 đạt kết quả tốt nhất từ trước tới giờ cho cả 2 kiến trúc. Nhưng UNSW-NB15-v2 tuy đã hồi phục vẫn **chưa vượt qua đỉnh của lượt 3** — nghi ngờ `WINDOW_SIZE=2000` hơi nhỏ so với bộ này (ít host hơn CSE-CIC, cửa sổ nhỏ có thể không đủ dài để lộ rõ hành vi bất thường theo IP, đúng cảnh báo "cửa sổ quá nhỏ làm giảm ngữ cảnh hành vi" đã trích dẫn trước đó) — cần nghiên cứu thêm hướng cải thiện riêng cho bộ này.
+
   **CSE-CIC-IDS2018 (GCN):** cải tiến rất rõ, `val_acc` ổn định ~0.99 suốt quá trình (không còn dao động 0.32-0.62 như lượt 2/3) — xác nhận Class-Balanced Loss + LR scheduler giải quyết đúng vấn đề bất ổn định. Gần bằng Random Forest.
 
   **UNSW-NB15-v2 (cả 2 mô hình): sụp đổ nghiêm trọng** — GCN tốt nhất ngay epoch 1 rồi càng train càng tệ; GAT đứng yên ở mức "đoán bừa toàn Benign" suốt cả quá trình, không học được gì. Nguyên nhân + cách sửa (giảm `WINDOW_SIZE`, nới patience) — xem chi tiết đầy đủ có trích dẫn nghiên cứu tại [`docs/decisions.md`](../decisions.md) mục 2026-07-19 ("GNN sụp đổ..."). **Cần chạy lại Graph Builder + train lại để kiểm chứng.**
