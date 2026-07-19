@@ -1,7 +1,6 @@
 # GNN-NIDS — Nghiên cứu và ứng dụng mạng nơ-ron đồ thị phát hiện xâm nhập mạng
 
-Thực tập tốt nghiệp — D22CQAT01-N, PTIT. Sinh viên: Trần Gia Thân (N22DCAT050), Trần Xuân Đông (N22DCAT018). Đơn vị thực tập: MyAloha — Mentor: Khanh.
-
+Thực tập tốt nghiệp — D22CQAT01-N, PTIT. Sinh viên: Trần Gia Thân (N22DCAT050), Trần Xuân Đông (N22DCAT018).
 Tài liệu định hướng đầy đủ: [`docs/00_research_plan.md`](docs/00_research_plan.md).
 
 ## Cấu trúc thư mục
