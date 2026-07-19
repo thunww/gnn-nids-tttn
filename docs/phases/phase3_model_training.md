@@ -84,3 +84,14 @@
   3. Thêm `ReduceLROnPlateau` (tự giảm nửa learning rate nếu `val_f1_macro` không cải thiện sau 3 epoch) — GNN vốn nổi tiếng huấn luyện không ổn định, kỹ thuật này giúp hội tụ mượt hơn.
   4. `MAX_EPOCHS`: 40 → 80 (UNSW-NB15 chưa bão hoà ở epoch 40 lượt 3).
   - Đã test cục bộ: cả 2 kiến trúc chạy đúng, LR scheduler tự giảm đúng lúc khi chững lại. Cần chạy lại trên Colab để có kết quả thật.
+
+  **Kết quả thật trên Colab (`val_f1_macro` tốt nhất):**
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | **0.7262 (epoch 22)** — tốt nhất từ trước tới giờ | 0.5073 (epoch 9) — giảm nhẹ so với lượt 3 |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | **0.1167 (epoch 1)** — sụp đổ | **0.0978** — sụp đổ hoàn toàn |
+
+  **CSE-CIC-IDS2018 (GCN):** cải tiến rất rõ, `val_acc` ổn định ~0.99 suốt quá trình (không còn dao động 0.32-0.62 như lượt 2/3) — xác nhận Class-Balanced Loss + LR scheduler giải quyết đúng vấn đề bất ổn định. Gần bằng Random Forest.
+
+  **UNSW-NB15-v2 (cả 2 mô hình): sụp đổ nghiêm trọng** — GCN tốt nhất ngay epoch 1 rồi càng train càng tệ; GAT đứng yên ở mức "đoán bừa toàn Benign" suốt cả quá trình, không học được gì. Nguyên nhân + cách sửa (giảm `WINDOW_SIZE`, nới patience) — xem chi tiết đầy đủ có trích dẫn nghiên cứu tại [`docs/decisions.md`](../decisions.md) mục 2026-07-19 ("GNN sụp đổ..."). **Cần chạy lại Graph Builder + train lại để kiểm chứng.**
