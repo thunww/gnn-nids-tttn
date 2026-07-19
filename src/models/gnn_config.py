@@ -12,8 +12,16 @@ GAT_HEADS = 4
 DROPOUT_GCN = 0.4
 DROPOUT_GAT = 0.5
 
-MAX_EPOCHS = 40
+MAX_EPOCHS = 80
 EARLY_STOPPING_PATIENCE = 5  # dung neu val_f1_macro khong cai thien sau 5 epoch lien tiep
+
+# Class-Balanced Loss (Cui et al., CVPR 2019) -- he so beta cho cong thuc "so mau hieu qua"
+CB_BETA = 0.999
+
+# Tu giam learning rate khi val_f1_macro chung lai (ReduceLROnPlateau) -- GNN von noi tieng
+# huan luyen khong on dinh, scheduler giup hoi tu muot hon
+LR_SCHEDULER_FACTOR = 0.5
+LR_SCHEDULER_PATIENCE = 3
 
 NODE_FEATURE_DIM = 4   # bac vao, bac ra, pagerank, clustering (graph/config.py NODE_FEATURE_NAMES)
 EDGE_FEATURE_DIM = 39  # so dac trung luong mang da chuan hoa (giong feature_cols o ETL/Graph Builder)

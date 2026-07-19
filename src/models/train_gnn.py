@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.utils.class_weight import compute_class_weight
 from torch_geometric.loader import DataLoader
 
 from etl.config import DATASETS
@@ -16,6 +15,7 @@ from models.gat import GATEdgeClassifier
 from models.gcn import GCNEdgeClassifier
 from models.gnn_config import (
     BATCH_SIZE,
+    CB_BETA,
     DEFAULT_PROCESSED_DIR,
     DROPOUT_GAT,
     DROPOUT_GCN,
@@ -24,6 +24,8 @@ from models.gnn_config import (
     GAT_HEADS,
     HIDDEN_DIM,
     LEARNING_RATE,
+    LR_SCHEDULER_FACTOR,
+    LR_SCHEDULER_PATIENCE,
     MAX_EPOCHS,
     NODE_FEATURE_DIM,
     NUM_LAYERS,
@@ -35,9 +37,21 @@ def load_graphs(processed_dir: Path, folder_name: str, split: str) -> list:
     return torch.load(processed_dir / folder_name / f"{split}_graphs.pt", weights_only=False)
 
 
-def compute_class_weights(train_graphs: list, num_classes: int, device: torch.device) -> torch.Tensor:
+def compute_class_weights(
+    train_graphs: list, num_classes: int, device: torch.device, beta: float = CB_BETA
+) -> torch.Tensor:
+    """Class-Balanced Loss (Cui et al., CVPR 2019) -- trong so dua tren "so mau hieu qua"
+    (1 - beta^n) / (1 - beta), bot cuc doan hon nhieu so voi ty le nghich truc tiep voi
+    lop sieu hiem, giam bat on dinh khi train (da quan sat thay o CSE-CIC-IDS2018 luot truoc).
+    """
     all_labels = torch.cat([g.y for g in train_graphs]).numpy()
-    weights = compute_class_weight(class_weight="balanced", classes=np.arange(num_classes), y=all_labels)
+    counts = np.bincount(all_labels, minlength=num_classes).astype(np.float64)
+    counts = np.clip(counts, 1, None)
+
+    effective_num = 1.0 - np.power(beta, counts)
+    weights = (1.0 - beta) / effective_num
+    weights = weights / weights.sum() * num_classes  # chuan hoa: trung binh trong so ~ 1
+
     return torch.tensor(weights, dtype=torch.float32, device=device)
 
 
@@ -69,6 +83,9 @@ def train_one_model(
     loader_val = DataLoader(val_graphs, batch_size=BATCH_SIZE)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="max", factor=LR_SCHEDULER_FACTOR, patience=LR_SCHEDULER_PATIENCE
+    )
     criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     ckpt_dir = out_dir / "checkpoints" / model_name
@@ -95,8 +112,13 @@ def train_one_model(
 
         val_acc, val_f1 = evaluate(model, loader_val, device)
         avg_loss = total_loss / len(train_graphs)
-        print(f"  epoch {epoch}/{MAX_EPOCHS}  loss={avg_loss:.4f}  val_acc={val_acc:.4f}  val_f1_macro={val_f1:.4f}")
+        lr = optimizer.param_groups[0]["lr"]
+        print(
+            f"  epoch {epoch}/{MAX_EPOCHS}  loss={avg_loss:.4f}  val_acc={val_acc:.4f}  "
+            f"val_f1_macro={val_f1:.4f}  lr={lr:.6f}"
+        )
 
+        scheduler.step(val_f1)
         torch.save(model.state_dict(), ckpt_dir / f"epoch_{epoch}.pt")
 
         if val_f1 > best_val_f1:
