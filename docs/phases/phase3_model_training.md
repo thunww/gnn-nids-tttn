@@ -62,3 +62,18 @@
   | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | 0.4339 (epoch 38) | 0.3452 (epoch 31) |
 
   So với lượt 1: **GAT tăng mạnh cả 2 bộ** (CSE-CIC 0.41→0.59, UNSW 0.26→0.35 — đúng mục tiêu chữa overfitting), **GCN/UNSW-NB15 tăng vọt** (0.26→0.43, nhờ class weight + train dài hơn), nhưng **GCN/CSE-CIC giảm nhẹ** (0.72→0.67 — nghi do class weight quá mạnh gây mất ổn định, `val_acc` giảm từ 0.99 xuống ~0.55 và dao động mạnh giữa các epoch thay vì tăng mượt như lượt 1). **GNN vẫn chưa vượt baseline ở cả 2 bộ**, dù khoảng cách đã thu hẹp đáng kể so với lượt 1.
+
+- **2026-07-19 — lượt 3: train lại trên đồ thị đã sửa đúng** (dựng từ `full_chronological.parquet`, giữ thứ tự gốc — xem lỗi + cách sửa ở `docs/decisions.md` mục 2026-07-19). Cùng cấu hình tinh chỉnh như lượt 2 (chưa đổi gì thêm). Kết quả `val_f1_macro` tốt nhất:
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | 0.6540 (epoch 9, early stop epoch 14) | 0.5594 (epoch 5, early stop epoch 10) |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | **0.4738 (epoch 40, KHÔNG early stop — vẫn đang tăng)** | 0.4189 (epoch 21, early stop epoch 26) |
+
+  **2 bộ dữ liệu phản ứng ngược chiều nhau sau khi sửa lỗi:**
+  - `nf-unsw-nb15-v2`: **tăng tiếp cả GCN lẫn GAT**, nhất quán qua cả 3 lượt (0.26→0.43→0.47 và 0.26→0.35→0.42). GCN chạy đủ 40/40 epoch không hề early-stop — vẫn còn dư địa cải thiện nếu tăng epoch tối đa. Đúng kỳ vọng: bộ này có tính "cụm theo IP" mạnh nhất (60% ở file gốc) nên sửa lỗi thứ tự ảnh hưởng rõ rệt nhất.
+  - `nf-cse-cic-ids2018-v2`: **giảm tiếp** (0.72→0.67→0.65 GCN; 0.41→0.59→0.56 GAT), early stopping kích hoạt rất sớm (epoch 10-14 thay vì 30-35 ở lượt 2).
+
+  **Lý do CSE-CIC giảm — khả năng cao là đánh giá giờ khắt khe/trung thực hơn, không hẳn mô hình học kém đi:** ở lượt 1-2, Graph Builder cắt cửa sổ *riêng biệt trong từng file* `train/val/test.parquet` (vốn đã là mẫu ngẫu nhiên đại diện toàn bộ dữ liệu do bị xáo trộn) → tập val cũ có phân bố gần giống train → đánh giá "dễ" hơn thực tế. Lượt 3: dựng hết đồ thị từ dữ liệu đúng thứ tự thời gian rồi mới chia ngẫu nhiên **các đồ thị** vào train/val/test → tập val giờ là lát cắt thời gian thực, có thể rơi vào giai đoạn khác hẳn đặc điểm với train → khó hơn nhưng trung thực hơn nhiều so với triển khai thực tế.
+
+  **⚠️ Điểm chưa công bằng cần lưu ý cho Giai đoạn 4:** baseline (Random Forest/XGBoost) vẫn dùng `train/val/test.parquet` kiểu cũ (chia ngẫu nhiên theo dòng, không theo thời gian) — nghĩa là **baseline đang được đánh giá "dễ" hơn** so với GNN (đánh giá theo thời gian thực). Cần ghi rõ hạn chế phương pháp luận này trong báo cáo, hoặc cân nhắc đánh giá baseline theo cùng kiểu chia thời gian để so sánh khách quan hơn.
