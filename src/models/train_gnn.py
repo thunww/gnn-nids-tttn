@@ -1,3 +1,5 @@
+import csv
+import json
 import sys
 from pathlib import Path
 
@@ -7,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from torch_geometric.loader import DataLoader
 
 from etl.config import DATASETS
@@ -35,6 +37,13 @@ from models.gnn_config import (
 
 def load_graphs(processed_dir: Path, folder_name: str, split: str) -> list:
     return torch.load(processed_dir / folder_name / f"{split}_graphs.pt", weights_only=False)
+
+
+def load_class_names(processed_dir: Path, folder_name: str, num_classes: int) -> list[str]:
+    mapping_path = processed_dir / folder_name / "attack_label_mapping.json"
+    with open(mapping_path, encoding="utf-8") as f:
+        mapping = json.load(f)
+    return [mapping.get(str(i), str(i)) for i in range(num_classes)]
 
 
 def compute_class_weights(
@@ -70,6 +79,49 @@ def evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> tupl
     return acc, f1_macro
 
 
+def compute_confusion(model: nn.Module, loader: DataLoader, device: torch.device, num_classes: int) -> np.ndarray:
+    model.eval()
+    all_preds, all_labels = [], []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            out = model(batch.x, batch.edge_index, batch.edge_attr)
+            all_preds.extend(out.argmax(dim=1).cpu().tolist())
+            all_labels.extend(batch.y.cpu().tolist())
+    # labels=range(num_classes) ep du kich thuoc NxN, tranh truong hop 1 lop nao do
+    # khong xuat hien trong tap danh gia lam sklearn tu bo lop do khoi ma tran.
+    return confusion_matrix(all_labels, all_preds, labels=list(range(num_classes)))
+
+
+def save_confusion_matrix(cm: np.ndarray, class_names: list[str], out_path: Path) -> None:
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([""] + class_names)
+        for name, row in zip(class_names, cm):
+            writer.writerow([name] + row.tolist())
+
+
+def print_confusion_summary(cm: np.ndarray, class_names: list[str]) -> None:
+    print("  Confusion matrix - lop hay bi nham thanh gi nhat (tren val):")
+    for i, name in enumerate(class_names):
+        row = cm[i].copy()
+        total = int(row.sum())
+        if total == 0:
+            continue
+        correct = int(row[i])
+        row[i] = -1  # loai duong cheo de tim lop hay bi nham nhat
+        worst_idx = int(row.argmax())
+        if row[worst_idx] <= 0:
+            print(f"    {name}: dung {correct}/{total} ({correct / total:.1%})")
+            continue
+        worst_name = class_names[worst_idx]
+        worst_count = int(row[worst_idx])
+        print(
+            f"    {name}: dung {correct}/{total} ({correct / total:.1%})"
+            f" | hay bi nham thanh '{worst_name}' ({worst_count} lan)"
+        )
+
+
 def train_one_model(
     model_name: str,
     model: nn.Module,
@@ -78,7 +130,7 @@ def train_one_model(
     out_dir: Path,
     device: torch.device,
     class_weights: torch.Tensor,
-) -> None:
+) -> Path:
     loader_train = DataLoader(train_graphs, batch_size=BATCH_SIZE, shuffle=True)
     loader_val = DataLoader(val_graphs, batch_size=BATCH_SIZE)
 
@@ -134,6 +186,7 @@ def train_one_model(
             break
 
     print(f"  model tot nhat: epoch {best_epoch}  val_f1_macro={best_val_f1:.4f}  luu tai {best_path}")
+    return best_path
 
 
 def run(processed_dir: Path) -> None:
@@ -148,6 +201,7 @@ def run(processed_dir: Path) -> None:
         print(f"  so do thi train={len(train_graphs)} val={len(val_graphs)} | so lop={num_classes}")
 
         class_weights = compute_class_weights(train_graphs, num_classes, device)
+        class_names = load_class_names(processed_dir, folder_name, num_classes)
 
         out_dir = processed_dir / folder_name
 
@@ -163,7 +217,17 @@ def run(processed_dir: Path) -> None:
         for name, model in models.items():
             print(f"--- {folder_name} / {name} ---")
             model = model.to(device)
-            train_one_model(name, model, train_graphs, val_graphs, out_dir, device, class_weights)
+            best_path = train_one_model(name, model, train_graphs, val_graphs, out_dir, device, class_weights)
+
+            # Nap lai dung trong so tot nhat (khong phai epoch cuoi) truoc khi tinh confusion matrix
+            model.load_state_dict(torch.load(best_path, map_location=device, weights_only=True))
+            loader_val = DataLoader(val_graphs, batch_size=BATCH_SIZE)
+            cm = compute_confusion(model, loader_val, device, num_classes)
+
+            cm_path = out_dir / "models" / f"{name}_confusion_matrix.csv"
+            save_confusion_matrix(cm, class_names, cm_path)
+            print_confusion_summary(cm, class_names)
+            print(f"  confusion matrix day du luu tai: {cm_path}")
 
 
 if __name__ == "__main__":

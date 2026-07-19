@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 
 from etl.config import ATTACK_COL, ATTACK_ENCODED_COL, DATASETS, IDENTIFIER_COLS, LABEL_COL
 from graph.build_graph import build_graph
-from graph.config import DEFAULT_PROCESSED_DIR, WINDOW_OVERLAP, WINDOW_SIZE
+from graph.config import DEFAULT_PROCESSED_DIR, WINDOW_OVERLAP, WINDOW_SIZE_BY_DATASET
 from graph.windowing import sliding_windows
 
 
@@ -38,7 +38,9 @@ def run(processed_dir: Path, num_workers: int | None = None) -> None:
         df = pd.read_parquet(path)
         feature_cols = feature_columns(df)
 
-        windows = ((window, feature_cols) for window in sliding_windows(df, WINDOW_SIZE, WINDOW_OVERLAP))
+        window_size = WINDOW_SIZE_BY_DATASET[folder_name]
+        print(f"  window_size={window_size}")
+        windows = ((window, feature_cols) for window in sliding_windows(df, window_size, WINDOW_OVERLAP))
 
         with Pool(num_workers) as pool:
             graphs = list(pool.imap(_build_one, windows, chunksize=4))
