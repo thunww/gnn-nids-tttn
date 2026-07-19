@@ -1,7 +1,7 @@
 # Giai đoạn 2 — Xây dựng biểu diễn đồ thị và quyết định về môi trường lab
 
 **Thời gian dự kiến:** Tuần 2
-**Trạng thái:** Graph Builder hoàn thành. Nhánh lab dời sau Giai đoạn 3 (xem bên dưới).
+**Trạng thái:** Đã sửa lỗi kiến trúc quan trọng (đồ thị bị dựng từ dữ liệu đã xáo trộn thứ tự) — cần chạy lại Graph Builder trước khi coi là hoàn tất. Nhánh lab dời sau Giai đoạn 3 (xem bên dưới).
 
 ## Mục tiêu
 - Xây dựng module Graph Builder (bảng → đồ thị), dùng chung cho cả hai bộ dữ liệu, kèm unit test.
@@ -16,6 +16,7 @@
 
 ## Đầu ra kiểm chứng được
 - [x] Graph Builder chạy đúng trên cả hai bộ dữ liệu, unit test pass.
+- [ ] Chạy lại Graph Builder với dữ liệu giữ đúng thứ tự thời gian (xem 2026-07-19 bên dưới) — *_graphs.pt hiện tại đã lỗi thời.
 - [ ] (Nếu Phương án A) Bộ dữ liệu lab thu thập đầy đủ nhãn, đã kiểm tra độ chính xác gán nhãn. (Dời sau Giai đoạn 3.)
 
 ## Nhật ký cập nhật
@@ -30,3 +31,4 @@
 - **Hiệu năng:** `run_graph_builder.py` chạy tuần tự (1 nhân) sẽ mất 5-6 tiếng cho toàn bộ dữ liệu — chuyển sang `multiprocessing.Pool` (8 worker) đưa xuống ~30 phút. Cần giữ nguyên cách chạy trực tiếp file script (`python src/graph/run_graph_builder.py`) khi có multiprocessing trên Windows, không chạy qua `python -c "..."` (spawn method trên Windows yêu cầu entry point từ 1 file thật).
 - **Dung lượng:** `*_graphs.pt` tổng ~8.1GB (riêng `nf-cse-cic-ids2018-v2/train_graphs.pt` = 5GB), hiện chỉ có ở local, **chưa upload lên Drive** — cần trước khi train GNN ở Giai đoạn 3 trên Colab.
 - **2026-07-18 — sửa nhãn cạnh từ nhị phân sang đa lớp**, ảnh hưởng trực tiếp `build_graph.py` — cần chạy lại `run_graph_builder.py`. Chi tiết đầy đủ xem [`docs/decisions.md`](../decisions.md).
+- **2026-07-19 — lỗi kiến trúc nghiêm trọng: đồ thị bị dựng từ dữ liệu đã xáo trộn thứ tự dòng** (do đọc trực tiếp từ `train/val/test.parquet` vốn đã bị `stratified_split` xáo ngẫu nhiên) — khiến mỗi "cửa sổ" 10.000 dòng không phải lát cắt thời gian thực, cấu trúc đồ thị gần như vô nghĩa. Đã sửa: `run_etl.py` xuất thêm `full_chronological.parquet` (giữ nguyên thứ tự), `run_graph_builder.py` đọc từ file này, chia đồ thị (không phải dòng) thành train/val/test sau khi đã dựng xong. Chi tiết đầy đủ + bằng chứng xem [`docs/decisions.md`](../decisions.md). **Cần chạy lại toàn bộ Graph Builder.**

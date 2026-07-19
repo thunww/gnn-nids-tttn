@@ -1,7 +1,7 @@
 # Giai đoạn 3 — Xây dựng và huấn luyện mô hình
 
 **Thời gian dự kiến:** Tuần 3
-**Trạng thái:** Cả 4 mô hình đã có kết quả lượt đầu (baseline + GCN/GAT) — cần cải tiến GNN trước khi coi là hoàn tất
+**Trạng thái:** Phát hiện + sửa lỗi kiến trúc nghiêm trọng ở Giai đoạn 2 (đồ thị bị dựng từ dữ liệu xáo trộn thứ tự — xem `docs/decisions.md` 2026-07-19) — 2 lượt train GCN/GAT trước đó (dưới đây) đều dựa trên đồ thị lỗi, **cần train lại từ đầu sau khi Graph Builder chạy lại**
 
 ## Mục tiêu
 - Hiện thực và huấn luyện GCN, GAT (tối ưu siêu tham số bằng Optuna).
@@ -28,7 +28,11 @@
 
   Model lưu tại `data/processed/<bộ>/models/{random_forest,xgboost}.joblib` (local, chưa upload Drive).
 
-- 2026-07-18: Viết `src/models/gnn_config.py`, `gcn.py`, `gat.py`, `train_gnn.py` — kiến trúc GCN/GAT phân loại cạnh (concat embedding node u, v + đặc trưng cạnh, đưa qua lớp phân loại đa lớp). Train trên Colab (GPU T4), 20 epoch, checkpoint mỗi epoch. Kết quả `val_f1_macro` cuối cùng (epoch 20):
+- 2026-07-18: Viết `src/models/gnn_config.py`, `gcn.py`, `gat.py`, `train_gnn.py` — kiến trúc GCN/GAT phân loại cạnh (concat embedding node u, v + đặc trưng cạnh, đưa qua lớp phân loại đa lớp). Train trên Colab (GPU T4), 20 epoch, checkpoint mỗi epoch.
+
+  **⚠️ Kết quả bên dưới (lượt 1 và lượt 2) đã lỗi thời** — train trên đồ thị dựng từ dữ liệu bị xáo trộn thứ tự (lỗi phát hiện 2026-07-19, xem `docs/decisions.md`). Giữ lại để đối chiếu/rút kinh nghiệm, không dùng làm kết quả chính thức.
+
+  Kết quả `val_f1_macro` cuối cùng (epoch 20):
 
   | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
   |---|---|---|---|---|
@@ -49,3 +53,12 @@
   2. Thêm early stopping (dừng khi `val_f1_macro` không cải thiện sau N epoch liên tiếp) + regularization (weight decay, tăng dropout) cho GAT.
   3. Với `nf-unsw-nb15-v2`: giảm `WINDOW_SIZE` hoặc tăng `WINDOW_OVERLAP` (`src/graph/config.py`) để tạo nhiều đồ thị con hơn từ cùng lượng dữ liệu, hoặc tăng số epoch (vì cả 2 mô hình chưa bão hoà).
   4. Tối ưu siêu tham số bằng Optuna (đã có trong kế hoạch ban đầu, `docs/00_research_plan.md`) thay vì để mặc định thủ công.
+
+- **2026-07-18 — lượt 2: áp dụng cải tiến có trích dẫn tài liệu** (dropout riêng GCN=0.4/GAT=0.5, weight_decay=5e-4, class-weighted CrossEntropyLoss, early stopping patience=5, tự lưu checkpoint tốt nhất theo `val_f1_macro`, max 40 epoch). Kết quả `val_f1_macro` tốt nhất (không phải epoch cuối):
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | 0.6714 (epoch 30) | 0.5921 (epoch 29) |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | 0.4339 (epoch 38) | 0.3452 (epoch 31) |
+
+  So với lượt 1: **GAT tăng mạnh cả 2 bộ** (CSE-CIC 0.41→0.59, UNSW 0.26→0.35 — đúng mục tiêu chữa overfitting), **GCN/UNSW-NB15 tăng vọt** (0.26→0.43, nhờ class weight + train dài hơn), nhưng **GCN/CSE-CIC giảm nhẹ** (0.72→0.67 — nghi do class weight quá mạnh gây mất ổn định, `val_acc` giảm từ 0.99 xuống ~0.55 và dao động mạnh giữa các epoch thay vì tăng mượt như lượt 1). **GNN vẫn chưa vượt baseline ở cả 2 bộ**, dù khoảng cách đã thu hẹp đáng kể so với lượt 1.
