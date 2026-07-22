@@ -46,6 +46,21 @@ def load_class_names(processed_dir: Path, folder_name: str, num_classes: int) ->
     return [mapping.get(str(i), str(i)) for i in range(num_classes)]
 
 
+def load_transferable_weights(model: nn.Module, source_state_dict: dict) -> None:
+    """Nap trong so tu model nguon (vd da train tren bo du lieu khac), CHI nap cac tham so
+    co dung kich thuoc -- bo qua (giu nguyen khoi tao ngau nhien) lop nao lech kich thuoc,
+    dien hinh la lop phan loai cuoi cung neu 2 bo du lieu co so luop khac nhau (15 vs 10 lop).
+    """
+    model_state = model.state_dict()
+    transferable = {
+        k: v for k, v in source_state_dict.items() if k in model_state and v.shape == model_state[k].shape
+    }
+    skipped = [k for k in source_state_dict if k not in transferable]
+    model_state.update(transferable)
+    model.load_state_dict(model_state)
+    print(f"  da nap {len(transferable)}/{len(source_state_dict)} tham so tu model nguon (bo qua: {skipped})")
+
+
 def compute_class_weights(
     train_graphs: list, num_classes: int, device: torch.device, beta: float = CB_BETA
 ) -> torch.Tensor:
@@ -130,11 +145,12 @@ def train_one_model(
     out_dir: Path,
     device: torch.device,
     class_weights: torch.Tensor,
+    learning_rate: float = LEARNING_RATE,
 ) -> Path:
     loader_train = DataLoader(train_graphs, batch_size=BATCH_SIZE, shuffle=True)
     loader_val = DataLoader(val_graphs, batch_size=BATCH_SIZE)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=WEIGHT_DECAY)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="max", factor=LR_SCHEDULER_FACTOR, patience=LR_SCHEDULER_PATIENCE
     )

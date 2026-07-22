@@ -109,3 +109,28 @@
   **CSE-CIC-IDS2018 (GCN):** cải tiến rất rõ, `val_acc` ổn định ~0.99 suốt quá trình (không còn dao động 0.32-0.62 như lượt 2/3) — xác nhận Class-Balanced Loss + LR scheduler giải quyết đúng vấn đề bất ổn định. Gần bằng Random Forest.
 
   **UNSW-NB15-v2 (cả 2 mô hình): sụp đổ nghiêm trọng** — GCN tốt nhất ngay epoch 1 rồi càng train càng tệ; GAT đứng yên ở mức "đoán bừa toàn Benign" suốt cả quá trình, không học được gì. Nguyên nhân + cách sửa (giảm `WINDOW_SIZE`, nới patience) — xem chi tiết đầy đủ có trích dẫn nghiên cứu tại [`docs/decisions.md`](../decisions.md) mục 2026-07-19 ("GNN sụp đổ..."). **Cần chạy lại Graph Builder + train lại để kiểm chứng.**
+
+- **2026-07-19 — lượt 6: `WINDOW_SIZE=5000` riêng cho UNSW-NB15 + confusion matrix thật đầu tiên.** Kết quả `val_f1_macro` tốt nhất:
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | 0.7357 (epoch 16) | 0.5588 (epoch 3) — dao động run-to-run, thấp hơn lượt 5 dù data/config giống hệt (chưa cố định random seed) |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | **0.4266 (epoch 50)** — nhích nhẹ so với lượt 5 (0.4190) | **0.3797 (epoch 79, chạy đủ 80/80, không early-stop)** — gần như không đổi so với lượt 5 (0.3796) |
+
+  **Kết luận quan trọng: tăng `WINDOW_SIZE` 2.000→5.000 KHÔNG cải thiện đáng kể như kỳ vọng** — giả thuyết "cửa sổ quá nhỏ thiếu ngữ cảnh" bị loại, không phải nguyên nhân chính.
+
+  **Confusion matrix (lần đầu có dữ liệu thật) hé lộ đúng nguyên nhân:**
+  - **CSE-CIC-IDS2018 (GCN, 0.7357)**: 11/15 lớp đạt 99-100% chính xác — F1-macro thấp hoàn toàn do 4 lớp: `Brute Force -Web`, `Brute Force -XSS`, `SQL Injection` (đều 0%, bị đoán nhầm thành `DDOS attack-HOIC` — các tấn công dựa trên web có cấu trúc đồ thị giống DDoS, GCN không có `edge_dim` nên dễ nhầm dựa trên cấu trúc) và `Infilteration` (18.6%, bị đoán nhầm thành `Benign` — tấn công loại này vốn thiết kế để lẩn vào lưu lượng bình thường, hạn chế đã biết trong y văn NIDS, không phải lỗi pipeline).
+  - **UNSW-NB15-v2 (GAT)**: `Analysis`, `Backdoor`, `DoS`, `Shellcode` đều 0%, **bị "dồn" có hệ thống vào đúng 1 lớp — `Reconnaissance`** (750-834 lần mỗi lớp) — không phải nhầm lẫn ngẫu nhiên. Đây khớp chính xác với hiện tượng **"chồng lấn lớp" (class overlap)** đã tìm thấy trong tài liệu nghiên cứu độc lập về UNSW-NB15 — đặc trưng luồng mạng của các loại tấn công này vốn dĩ rất giống nhau trong chính bộ dữ liệu, không phải lỗi đồ thị/mô hình.
+
+  **Đánh giá tổng thể sau 6 lượt**: đã loại hết các nguyên nhân "lỗi pipeline" có thể sửa được (xáo trộn thứ tự, sụp đổ do class weight/scheduler, cửa sổ quá nhỏ). Nguyên nhân còn lại của UNSW-NB15 giờ có bằng chứng cụ thể (confusion matrix) + tài liệu độc lập xác nhận: **hạn chế cố hữu của chính bộ dữ liệu**, không phải điều sửa được bằng tinh chỉnh siêu tham số/cấu trúc cửa sổ.
+
+- **2026-07-19 — lượt 7: thử Transfer Learning cho UNSW-NB15-v2.** Trước khi làm, cân nhắc thêm **Focal Loss** (kỹ thuật tập trung vào mẫu khó/dễ nhầm, tưởng hợp với vấn đề chồng lấn lớp) nhưng **loại bỏ** — nghiên cứu cho kết quả trái chiều cụ thể với GNN (*"class-balanced focal loss did not yield benefits for several... GNN models"*), trong khi cross-entropy có trọng số lớp (cách đang dùng) được xác nhận là lựa chọn ổn định hơn ở 1 nghiên cứu khác. Chọn hướng có cơ sở chắc hơn: **Transfer Learning**.
+
+  **Cách làm:** viết file mới `src/models/train_gnn_transfer.py` (không sửa `train_gnn.py` gốc, giữ nguyên kết quả train-từ-đầu để đối chiếu) — nạp trọng số đã train trên CSE-CIC-IDS2018 (`gcn_best.pt`, `gat_best.pt`, 13.224 đồ thị) làm điểm khởi đầu cho UNSW-NB15 (668 đồ thị), thay vì khởi tạo ngẫu nhiên, rồi fine-tune với learning rate thấp hơn 10 lần (`FINE_TUNE_LEARNING_RATE`).
+
+  **Vấn đề kỹ thuật xử lý:** 2 bộ dữ liệu có **số lớp khác nhau** (15 vs 10) nên không thể nạp nguyên trọng số — viết hàm `load_transferable_weights()` (`train_gnn.py`) chỉ nạp các tham số **cùng kích thước** (các lớp truyền thông điệp — không phụ thuộc số lớp), tự động bỏ qua lớp phân loại cuối cùng (phụ thuộc số lớp, giữ nguyên khởi tạo ngẫu nhiên). Đã test cục bộ: nạp đúng 6/8 tham số, bỏ đúng 2 tham số lớp cuối, không lỗi.
+
+  **⚠️ Lưu ý quan trọng khi viết báo cáo**: đây là **thử nghiệm bổ sung** nhằm cải thiện kết quả within-dataset (RQ1) của UNSW-NB15 — **khác hoàn toàn** với Thí nghiệm 2/RQ2 (train xong 1 bộ, test thẳng sang bộ kia, KHÔNG tinh chỉnh gì) — phải trình bày tách bạch 2 thí nghiệm này, không gộp chung kẻo hội đồng hiểu nhầm phá vỡ tính khách quan của RQ2.
+
+  Kết quả (`*_transfer_best.pt`, `*_transfer_confusion_matrix.csv`, lưu riêng không ghi đè model train-từ-đầu) — **cần chạy trên Colab để có số liệu thật**, cập nhật bảng so sánh sau khi có kết quả.

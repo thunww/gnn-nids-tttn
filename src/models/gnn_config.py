@@ -30,3 +30,11 @@ NODE_FEATURE_DIM = 4   # bac vao, bac ra, pagerank, clustering (graph/config.py 
 EDGE_FEATURE_DIM = 39  # so dac trung luong mang da chuan hoa (giong feature_cols o ETL/Graph Builder)
 
 DEFAULT_PROCESSED_DIR = Path("data/processed")
+
+# Transfer learning (2026-07-19): UNSW-NB15-v2 qua it do thi (668 train) de tu hoc phan biet
+# cac lop chong lan dac trung (xem docs/decisions.md) -- nap truoc trong so da hoc tu
+# CSE-CIC-IDS2018 (13.224 do thi, da hoc tot cach nhan dien cau truc tan cong noi chung) lam
+# diem khoi dau, thay vi khoi tao ngau nhien. Day la THU NGHIEM BO SUNG cho RQ1 (within-dataset),
+# KHAC voi Thi nghiem 2/RQ2 (train 1 bo, test thang sang bo kia, khong tinh chinh).
+PRETRAINED_SOURCE = {"nf-unsw-nb15-v2": "nf-cse-cic-ids2018-v2"}
+FINE_TUNE_LEARNING_RATE = LEARNING_RATE / 10
