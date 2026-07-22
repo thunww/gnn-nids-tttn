@@ -134,3 +134,5 @@
   **⚠️ Lưu ý quan trọng khi viết báo cáo**: đây là **thử nghiệm bổ sung** nhằm cải thiện kết quả within-dataset (RQ1) của UNSW-NB15 — **khác hoàn toàn** với Thí nghiệm 2/RQ2 (train xong 1 bộ, test thẳng sang bộ kia, KHÔNG tinh chỉnh gì) — phải trình bày tách bạch 2 thí nghiệm này, không gộp chung kẻo hội đồng hiểu nhầm phá vỡ tính khách quan của RQ2.
 
   Kết quả (`*_transfer_best.pt`, `*_transfer_confusion_matrix.csv`, lưu riêng không ghi đè model train-từ-đầu) — **cần chạy trên Colab để có số liệu thật**, cập nhật bảng so sánh sau khi có kết quả.
+
+- **2026-07-19 — lượt 8: làm giàu đặc trưng node (4→43 chiều) + tăng `HIDDEN_DIM` (64→128), áp dụng cho cả 2 bộ, cả GCN lẫn GAT.** Chi tiết đầy đủ (vì sao Node2Vec/line-graph bất khả thi, cách thay thế) xem [`docs/decisions.md`](../decisions.md) mục "Làm giàu đặc trưng node". Đã test cục bộ (shape, tốc độ, unit test) — **cần chạy lại Graph Builder + train lại toàn bộ (cả train-từ-đầu lẫn transfer learning) để có kết quả thật.**

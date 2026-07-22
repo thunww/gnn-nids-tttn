@@ -1,6 +1,8 @@
 from pathlib import Path
 
-HIDDEN_DIM = 64
+# Tang 64->128 (2026-07-19): them dung luong cho bai toan 15 lop (CSE-CIC) + dac trung node
+# vua tang tu 4 len 43 chieu -- xem docs/decisions.md.
+HIDDEN_DIM = 128
 NUM_LAYERS = 2
 LEARNING_RATE = 0.001
 WEIGHT_DECAY = 5e-4  # L2 regularization, chong overfitting (dac biet cho GAT)
@@ -26,7 +28,11 @@ CB_BETA = 0.999
 LR_SCHEDULER_FACTOR = 0.5
 LR_SCHEDULER_PATIENCE = 8
 
-NODE_FEATURE_DIM = 4   # bac vao, bac ra, pagerank, clustering (graph/config.py NODE_FEATURE_NAMES)
+# Tang 4->43 (2026-07-19): 4 dac trung cau truc (bac vao/ra, pagerank, clustering) + 39 dac
+# trung tong hop tu canh ke (trung binh cac canh vao/ra node do) -- xem graph/node_features.py,
+# docs/decisions.md ("lam giau dac trung node"). Node2Vec/line-graph (cach "chuan" hon trong
+# tai lieu N2V-EGS-PCA) khong kha thi trong pipeline theo-cua-so hien tai, day la thay the thuc te.
+NODE_FEATURE_DIM = 43
 EDGE_FEATURE_DIM = 39  # so dac trung luong mang da chuan hoa (giong feature_cols o ETL/Graph Builder)
 
 DEFAULT_PROCESSED_DIR = Path("data/processed")

@@ -40,10 +40,15 @@ def test_build_edges_shape_matches_rows():
 def test_compute_node_features_shape_and_degree():
     df = _sample_df()
     node_id, src_key, dst_key = build_node_ids(df, "IPV4_SRC_ADDR", "L4_SRC_PORT", "IPV4_DST_ADDR", "L4_DST_PORT")
-    edge_index, _ = build_edges(df, node_id, src_key, dst_key, ["IN_BYTES"])
-    features = compute_node_features(edge_index, len(node_id))
+    edge_index, edge_attr = build_edges(df, node_id, src_key, dst_key, ["IN_BYTES"])
+    features = compute_node_features(edge_index, edge_attr, len(node_id))
 
-    assert features.shape == (len(node_id), 4)
+    # 4 dac trung cau truc + 1 dac trung tong hop (chi co 1 cot IN_BYTES trong test nay)
+    assert features.shape == (len(node_id), 4 + 1)
     # "10.0.0.1:1111" la nguon cua 2 canh -> out_degree = 2
     out_degree_col = 1
     assert features[node_id["10.0.0.1:1111"], out_degree_col] == 2
+
+    # "10.0.0.1:1111" la nguon cua 2 canh IN_BYTES=[100, 200] -> trung binh = 150
+    in_bytes_agg_col = 4
+    assert features[node_id["10.0.0.1:1111"], in_bytes_agg_col] == 150.0

@@ -14,6 +14,8 @@ WINDOW_SIZE_BY_DATASET = {
 }
 WINDOW_OVERLAP = 0.5
 
+# 4 dac trung cau truc + 39 dac trung tong hop tu canh ke (trung binh cac canh vao/ra node do)
+# -- xem graph/node_features.py va docs/decisions.md (2026-07-19, "lam giau dac trung node").
 NODE_FEATURE_NAMES = ["in_degree", "out_degree", "pagerank", "clustering"]
 
 DEFAULT_PROCESSED_DIR = Path("data/processed")

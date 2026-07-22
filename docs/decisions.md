@@ -62,3 +62,20 @@ Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file
 - `src/graph/config.py`: `WINDOW_SIZE` 10.000 → **2.000** (giữ nguyên `WINDOW_OVERLAP=0.5`) — tạo nhiều đồ thị hơn ~5 lần (UNSW-NB15: 477 → 2389 cửa sổ), giảm độ loãng tín hiệu tấn công mỗi cửa sổ.
 - `src/models/gnn_config.py`: `EARLY_STOPPING_PATIENCE` 5→15, `LR_SCHEDULER_PATIENCE` 3→8 — bớt nhạy với nhiễu ngắn hạn.
 - **Cần chạy lại toàn bộ Graph Builder** (~30 phút, có thể lâu hơn do nhiều cửa sổ hơn) rồi train lại GNN trên Colab.
+
+## 2026-07-19 — Làm giàu đặc trưng node (thay cho Node2Vec/line-graph bất khả thi)
+
+**Bối cảnh:** sau 6 lượt tinh chỉnh, xác định nguyên nhân UNSW-NB15 thấp là do chồng lấn lớp (xem `docs/phases/phase3_model_training.md` lượt 6). Nghiên cứu thêm để cải thiện chung cả 2 bộ (cả CSE-CIC lẫn UNSW-NB15, cả GCN lẫn GAT), tìm được: mô hình **N2V-EGS-PCA** (Node2Vec + đặc trưng cạnh + PCA) đạt Macro F1 = 93.92% trên dữ liệu tương tự — cao hơn GraphSAGE thường ~45%, lý do chính: *"utilizing a comprehensive feature set that includes both edge and node features"*.
+
+**Vấn đề:** đặc trưng node hiện tại chỉ có 4 số thuần cấu trúc (bậc vào/ra, PageRank, clustering) — không hề biết nội dung luồng mạng thật đi qua node đó. Cách "chuẩn" trong tài liệu (Node2Vec, hoặc biến đổi "đồ thị đường" — line graph, biến mỗi luồng thành 1 node) **không khả thi trong pipeline theo-cửa-sổ hiện tại**:
+- **Node2Vec riêng cho từng cửa sổ**: ước tính chỉ 5 giây/cửa sổ × ~18.892 cửa sổ (CSE-CIC) = **~26 tiếng** chỉ riêng bước dựng đồ thị — không thực tế.
+- **Line graph**: 1 cửa sổ có tấn công DDoS (1 nạn nhân nhận hàng nghìn kết nối) sẽ tạo ra hàng triệu cạnh mới chỉ từ 1 node (toán tổ hợp k luồng → ~k²/2 cạnh) — rủi ro nổ bộ nhớ đúng ở loại tấn công quan trọng nhất cần phát hiện.
+
+**Đã làm (thay thế thực tế, không cần huấn luyện gì thêm):**
+- `src/graph/node_features.py`: thêm hàm `aggregate_edge_features_per_node()` — tính **trung bình cộng** (không cần model, tính trực tiếp bằng numpy, rất nhanh — 0.22s/cửa sổ 5.000 cạnh) của toàn bộ 39 đặc trưng cạnh (cả chiều vào lẫn ra) cho từng node. Ghép với 4 đặc trưng cấu trúc cũ → node giờ có **43 đặc trưng** (tăng từ 4).
+- `src/graph/build_graph.py`: truyền thêm `edge_attr` vào `compute_node_features()`.
+- `src/models/gnn_config.py`: `NODE_FEATURE_DIM` 4→43; đồng thời tăng `HIDDEN_DIM` 64→128 (thêm dung lượng mô hình cho bài toán 15 lớp + đầu vào node giờ phong phú hơn nhiều).
+- Áp dụng cho **cả 2 bộ dữ liệu, cả GCN lẫn GAT** (không phải chỉ riêng UNSW-NB15).
+- Đã test cục bộ: shape đúng (N×43), tốc độ không ảnh hưởng đáng kể, unit test cập nhật và pass.
+
+**Cần làm tiếp:** chạy lại `run_graph_builder.py` (dựng lại toàn bộ đồ thị với đặc trưng node mới) → train lại GCN/GAT (cả train-từ-đầu lẫn transfer learning) trên Colab để có kết quả thật.
