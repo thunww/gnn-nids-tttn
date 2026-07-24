@@ -25,6 +25,8 @@ from models.gnn_config import (
 from models.train_gnn import (
     compute_class_weights,
     compute_confusion,
+    count_and_collect_labels,
+    list_train_shards,
     load_class_names,
     load_graphs,
     load_transferable_weights,
@@ -34,7 +36,7 @@ from models.train_gnn import (
 )
 
 
-def run(processed_dir: Path) -> None:
+def run(processed_dir: Path, output_dir: Path | None = None) -> None:
     """Transfer learning: nap trong so da train tren bo NGUON (lon, da on dinh) lam diem
     khoi dau cho bo DICH (nho, thieu du lieu), roi fine-tune tiep voi learning rate thap hon.
 
@@ -42,7 +44,14 @@ def run(processed_dir: Path) -> None:
     KHAC voi Thi nghiem 2 / RQ2 (train 1 bo, test thang sang bo kia, khong tinh chinh gi).
     Ket qua luu rieng (hau to "_transfer"), KHONG ghi de model train-tu-dau da co, de con
     doi chieu ca 2 cach trong bao cao.
+
+    processed_dir/output_dir: xem docs-string cua models.train_gnn.run() -- cung quy uoc
+    (processed_dir = doc du lieu, nen la ban sao dia cuc bo; output_dir = ghi checkpoint,
+    nen la Drive). model NGUON (da pretrain) la SAN PHAM cua lan train truoc (ghi vao
+    output_dir cua lan do), khong phai du lieu goc -- vi vay doc tu output_dir, khong phai
+    processed_dir.
     """
+    output_dir = output_dir or processed_dir
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
 
@@ -54,16 +63,21 @@ def run(processed_dir: Path) -> None:
     for target_folder, source_folder in PRETRAINED_SOURCE.items():
         print(f"=== Transfer learning: {source_folder} -> {target_folder} ===")
 
-        train_graphs = load_graphs(processed_dir, target_folder, "train")
+        train_shard_paths = list_train_shards(processed_dir, target_folder)
         val_graphs = load_graphs(processed_dir, target_folder, "val")
-        num_classes = int(max(g.y.max().item() for g in train_graphs) + 1)
-        print(f"  so do thi train={len(train_graphs)} val={len(val_graphs)} | so lop={num_classes}")
+        num_train_graphs, all_train_labels = count_and_collect_labels(train_shard_paths)
+        num_classes = int(all_train_labels.max().item()) + 1
+        print(
+            f"  so do thi train={num_train_graphs} (chia {len(train_shard_paths)} shard)"
+            f" val={len(val_graphs)} | so lop={num_classes}"
+        )
 
-        class_weights = compute_class_weights(train_graphs, num_classes, device)
+        class_weights = compute_class_weights(all_train_labels, num_classes, device)
+        del all_train_labels
         class_names = load_class_names(processed_dir, target_folder, num_classes)
 
-        out_dir = processed_dir / target_folder
-        source_models_dir = processed_dir / source_folder / "models"
+        out_dir = output_dir / target_folder
+        source_models_dir = output_dir / source_folder / "models"
 
         for name, (cls, kwargs) in model_classes.items():
             print(f"--- {target_folder} / {name} (transfer tu {source_folder}) ---")
@@ -80,7 +94,8 @@ def run(processed_dir: Path) -> None:
             best_path = train_one_model(
                 f"{name}_transfer",
                 model,
-                train_graphs,
+                train_shard_paths,
+                num_train_graphs,
                 val_graphs,
                 out_dir,
                 device,
@@ -100,4 +115,5 @@ def run(processed_dir: Path) -> None:
 
 if __name__ == "__main__":
     processed_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PROCESSED_DIR
-    run(processed_dir)
+    output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else None
+    run(processed_dir, output_dir)

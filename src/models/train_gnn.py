@@ -1,5 +1,7 @@
 import csv
+import gc
 import json
+import random
 import sys
 from pathlib import Path
 
@@ -39,6 +41,38 @@ def load_graphs(processed_dir: Path, folder_name: str, split: str) -> list:
     return torch.load(processed_dir / folder_name / f"{split}_graphs.pt", weights_only=False)
 
 
+def list_train_shards(processed_dir: Path, folder_name: str) -> list[Path]:
+    """Tra ve danh sach file shard cua tap train (train_graphs_shard0.pt, shard1.pt, ...),
+    da sap xep. Neu chua chia shard (vd bo du lieu nho nhu UNSW-NB15, xem shard_graphs.py)
+    thi tra ve [train_graphs.pt] goc (1 phan tu) -- tuong thich nguoc, khong can code rieng.
+    """
+    base_dir = processed_dir / folder_name
+    shards = sorted(
+        base_dir.glob("train_graphs_shard*.pt"),
+        key=lambda p: int(p.stem.rsplit("shard", 1)[1]),
+    )
+    if shards:
+        return shards
+    return [base_dir / "train_graphs.pt"]
+
+
+def count_and_collect_labels(shard_paths: list[Path]) -> tuple[int, torch.Tensor]:
+    """Duyet 1 luot qua cac shard train de dem tong so do thi va gom nhan (y) -- dung de tinh
+    so lop va class weights ma KHONG can giu ca danh sach Data trong RAM cung luc (moi luc chi
+    1 shard, giai phong ngay sau khi lay xong nhan). Day la buoc chinh giup train tren Colab
+    free (~12-13GB RAM) khong bi OOM voi bo dac trung node 43 chieu -- xem docs/decisions.md.
+    """
+    total = 0
+    label_chunks = []
+    for path in shard_paths:
+        graphs = torch.load(path, weights_only=False)
+        total += len(graphs)
+        label_chunks.append(torch.cat([g.y for g in graphs]))
+        del graphs
+    gc.collect()
+    return total, torch.cat(label_chunks)
+
+
 def load_class_names(processed_dir: Path, folder_name: str, num_classes: int) -> list[str]:
     mapping_path = processed_dir / folder_name / "attack_label_mapping.json"
     with open(mapping_path, encoding="utf-8") as f:
@@ -62,14 +96,13 @@ def load_transferable_weights(model: nn.Module, source_state_dict: dict) -> None
 
 
 def compute_class_weights(
-    train_graphs: list, num_classes: int, device: torch.device, beta: float = CB_BETA
+    all_labels: torch.Tensor, num_classes: int, device: torch.device, beta: float = CB_BETA
 ) -> torch.Tensor:
     """Class-Balanced Loss (Cui et al., CVPR 2019) -- trong so dua tren "so mau hieu qua"
     (1 - beta^n) / (1 - beta), bot cuc doan hon nhieu so voi ty le nghich truc tiep voi
     lop sieu hiem, giam bat on dinh khi train (da quan sat thay o CSE-CIC-IDS2018 luot truoc).
     """
-    all_labels = torch.cat([g.y for g in train_graphs]).numpy()
-    counts = np.bincount(all_labels, minlength=num_classes).astype(np.float64)
+    counts = np.bincount(all_labels.numpy(), minlength=num_classes).astype(np.float64)
     counts = np.clip(counts, 1, None)
 
     effective_num = 1.0 - np.power(beta, counts)
@@ -140,14 +173,14 @@ def print_confusion_summary(cm: np.ndarray, class_names: list[str]) -> None:
 def train_one_model(
     model_name: str,
     model: nn.Module,
-    train_graphs: list,
+    train_shard_paths: list[Path],
+    num_train_graphs: int,
     val_graphs: list,
     out_dir: Path,
     device: torch.device,
     class_weights: torch.Tensor,
     learning_rate: float = LEARNING_RATE,
 ) -> Path:
-    loader_train = DataLoader(train_graphs, batch_size=BATCH_SIZE, shuffle=True)
     loader_val = DataLoader(val_graphs, batch_size=BATCH_SIZE)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=WEIGHT_DECAY)
@@ -169,17 +202,27 @@ def train_one_model(
     for epoch in range(1, MAX_EPOCHS + 1):
         model.train()
         total_loss = 0.0
-        for batch in loader_train:
-            batch = batch.to(device)
-            optimizer.zero_grad()
-            out = model(batch.x, batch.edge_index, batch.edge_attr)
-            loss = criterion(out, batch.y)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item() * batch.num_graphs
+        # Nap tung shard vao RAM, train het batch cua shard do roi giai phong ngay, thay vi
+        # giu toan bo train_graphs trong RAM suot qua trinh train (xem shard_graphs.py,
+        # docs/decisions.md). Xao thu tu shard moi epoch de gan voi shuffle toan cuc hon.
+        shard_order = train_shard_paths.copy()
+        random.shuffle(shard_order)
+        for shard_path in shard_order:
+            shard_graphs = torch.load(shard_path, weights_only=False)
+            loader_train = DataLoader(shard_graphs, batch_size=BATCH_SIZE, shuffle=True)
+            for batch in loader_train:
+                batch = batch.to(device)
+                optimizer.zero_grad()
+                out = model(batch.x, batch.edge_index, batch.edge_attr)
+                loss = criterion(out, batch.y)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item() * batch.num_graphs
+            del shard_graphs, loader_train
+        gc.collect()
 
         val_acc, val_f1 = evaluate(model, loader_val, device)
-        avg_loss = total_loss / len(train_graphs)
+        avg_loss = total_loss / num_train_graphs
         lr = optimizer.param_groups[0]["lr"]
         print(
             f"  epoch {epoch}/{MAX_EPOCHS}  loss={avg_loss:.4f}  val_acc={val_acc:.4f}  "
@@ -205,21 +248,33 @@ def train_one_model(
     return best_path
 
 
-def run(processed_dir: Path) -> None:
+def run(processed_dir: Path, output_dir: Path | None = None) -> None:
+    """processed_dir: noi doc du lieu do thi (*_graphs*.pt) -- tren Colab nen tro vao ban sao
+    o dia cuc bo (/content/...), vi shard train duoc doc lai moi epoch, doc truc tiep tu Drive
+    (FUSE mount, thong luong thap) se rat cham. output_dir: noi ghi checkpoint/model (mac dinh
+    = processed_dir neu khong truyen) -- tren Colab nen tro thang vao Drive de khong mat tien do
+    neu phien bi ngat giua chung (file checkpoint nho, ghi truc tiep len Drive khong cham).
+    """
+    output_dir = output_dir or processed_dir
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
 
     for folder_name in DATASETS:
         print(f"=== {folder_name} ===")
-        train_graphs = load_graphs(processed_dir, folder_name, "train")
+        train_shard_paths = list_train_shards(processed_dir, folder_name)
         val_graphs = load_graphs(processed_dir, folder_name, "val")
-        num_classes = int(max(g.y.max().item() for g in train_graphs) + 1)
-        print(f"  so do thi train={len(train_graphs)} val={len(val_graphs)} | so lop={num_classes}")
+        num_train_graphs, all_train_labels = count_and_collect_labels(train_shard_paths)
+        num_classes = int(all_train_labels.max().item()) + 1
+        print(
+            f"  so do thi train={num_train_graphs} (chia {len(train_shard_paths)} shard)"
+            f" val={len(val_graphs)} | so lop={num_classes}"
+        )
 
-        class_weights = compute_class_weights(train_graphs, num_classes, device)
+        class_weights = compute_class_weights(all_train_labels, num_classes, device)
+        del all_train_labels
         class_names = load_class_names(processed_dir, folder_name, num_classes)
 
-        out_dir = processed_dir / folder_name
+        out_dir = output_dir / folder_name
 
         models = {
             "gcn": GCNEdgeClassifier(
@@ -233,7 +288,9 @@ def run(processed_dir: Path) -> None:
         for name, model in models.items():
             print(f"--- {folder_name} / {name} ---")
             model = model.to(device)
-            best_path = train_one_model(name, model, train_graphs, val_graphs, out_dir, device, class_weights)
+            best_path = train_one_model(
+                name, model, train_shard_paths, num_train_graphs, val_graphs, out_dir, device, class_weights
+            )
 
             # Nap lai dung trong so tot nhat (khong phai epoch cuoi) truoc khi tinh confusion matrix
             model.load_state_dict(torch.load(best_path, map_location=device, weights_only=True))
@@ -248,4 +305,5 @@ def run(processed_dir: Path) -> None:
 
 if __name__ == "__main__":
     processed_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PROCESSED_DIR
-    run(processed_dir)
+    output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else None
+    run(processed_dir, output_dir)

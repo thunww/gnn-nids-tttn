@@ -79,3 +79,26 @@ Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file
 - Đã test cục bộ: shape đúng (N×43), tốc độ không ảnh hưởng đáng kể, unit test cập nhật và pass.
 
 **Cần làm tiếp:** chạy lại `run_graph_builder.py` (dựng lại toàn bộ đồ thị với đặc trưng node mới) → train lại GCN/GAT (cả train-từ-đầu lẫn transfer learning) trên Colab để có kết quả thật.
+
+## 2026-07-24 — Colab bị crash (nghi OOM) sau khi làm giàu đặc trưng node; sửa bằng chia shard thay vì giảm đặc trưng
+
+**Vấn đề:** sau khi tăng `NODE_FEATURE_DIM` 4→43 (mục trên), `train_graphs.pt` của CSE-CIC-IDS2018 tăng từ ~5GB lên **10.9GB** (`val_graphs.pt` 2.2GB). Trên Colab free (~12-13GB RAM), cell train chạy đúng ~10 phút rồi dừng đột ngột (hiện `^C` dù người dùng không bấm gì) — dấu hiệu kinh điển của process bị hệ điều hành/Colab kill do hết RAM (OOM), không phải lỗi code.
+
+**Đo đạc cụ thể** (kiểm tra trực tiếp trên file đã build): mỗi đồ thị con trung bình **2.695 node × 43 chiều** (đặc trưng node) **+ 2.000 cạnh × 39 chiều** (đặc trưng cạnh) = 193.885 số thực/đồ thị × 13.224 đồ thị ≈ khớp đúng 10.9GB quan sát được. Đáng chú ý: số **node** trung bình mỗi cửa sổ (2.695) còn nhiều hơn số **cạnh** (2.000 = `WINDOW_SIZE`) — vì mỗi cạnh có 2 đầu mút (IP:port) thường không trùng nhau.
+
+**Cân nhắc 2 hướng khắc phục:**
+1. **Giảm số đặc trưng node** (43→~14, chỉ giữ 4 đặc trưng cấu trúc + ~10 đặc trưng cạnh tổng hợp quan trọng nhất): giảm ~40% dung lượng, nhưng (a) phải dựng lại toàn bộ đồ thị từ đầu (~30-45 phút), (b) mất thông tin của 29 đặc trưng cạnh còn lại ở node (dù rủi ro thấp vì GAT/GCN đã "nhìn" toàn bộ 39 đặc trưng cạnh trực tiếp qua message passing, đặc trưng tổng hợp ở node chỉ là tín hiệu gợi ý thêm).
+2. **Chia nhỏ file thành nhiều shard, nạp dần vào RAM** (đã chọn): không đụng đến đặc trưng đã làm giàu, không cần dựng lại đồ thị — chỉ cắt file `.pt` đã build sẵn thành nhiều mảnh, sửa vòng lặp train để mỗi lúc chỉ giữ 1 shard trong RAM.
+
+**Lý do chọn hướng 2:** giữ nguyên toàn bộ hướng cải tiến "làm giàu đặc trưng node" đã làm và đã research kỹ (mục trên) — không đánh đổi chất lượng dữ liệu để đổi lấy RAM, đồng thời tránh phải tốn thêm 30-45 phút dựng lại đồ thị.
+
+**Đã làm:**
+- `src/models/shard_graphs.py` (mới): cắt `train_graphs.pt` đã build sẵn thành nhiều `train_graphs_shard{i}.pt`, mỗi shard ~2.200 đồ thị (~1.7GB). Chỉ chia tập **train** (đọc lại mỗi epoch) — tập **val** (2.2GB, chỉ đọc 1 lần/epoch) giữ nguyên cả file, không chia. Bộ dữ liệu nhỏ hơn `WINDOW_SIZE` shard (vd UNSW-NB15, 668 đồ thị) tự động bỏ qua, không tạo shard thừa.
+- `src/models/train_gnn.py`: thêm `list_train_shards()` (tự tương thích ngược — nếu không có file shard thì trả về `[train_graphs.pt]` gốc, dùng được cho cả UNSW-NB15), `count_and_collect_labels()` (duyệt 1 lượt qua các shard để đếm tổng số đồ thị + gom nhãn tính class weight, không giữ cả list `Data` trong RAM). `train_one_model()` đổi sang nhận `train_shard_paths` + `num_train_graphs` thay vì `train_graphs: list` — mỗi epoch nạp từng shard (thứ tự xáo ngẫu nhiên), train hết batch của shard đó rồi giải phóng (`del` + `gc.collect()`) trước khi nạp shard tiếp theo. `compute_class_weights()` đổi sang nhận thẳng tensor nhãn đã gom sẵn thay vì tính lại từ `train_graphs`.
+- `src/models/train_gnn_transfer.py`: cập nhật theo signature mới tương ứng.
+- Đã chạy thử với dữ liệu giả (2 shard nhỏ) xác nhận toàn bộ luồng (đếm nhãn → class weights → train 2 epoch → lưu checkpoint) chạy đúng, không lỗi.
+- Đã chạy `shard_graphs.py` thật trên `train_graphs.pt` cục bộ: CSE-CIC-IDS2018 → 7 shard (~1.7GB/shard, shard cuối 19MB), UNSW-NB15 giữ nguyên (668 đồ thị, không đủ lớn để cần chia).
+
+**RAM dự kiến khi train:** tại một thời điểm chỉ cần giữ 1 shard train (~1.7GB) + val nguyên (2.2GB) trong RAM cùng lúc ≈ 3.9GB — dư dả nhiều so với ~12-13GB RAM Colab free, thay vì phải nạp hết 10.9GB một lúc như trước.
+
+**Cần làm tiếp:** upload lại các file shard mới (+ xoá/không nén `train_graphs.pt` gốc 11GB đã dư thừa) lên Drive, cập nhật `notebooks/00_colab_bootstrap.ipynb` cho khớp tên file mới, chạy lại train GCN/GAT (cả train-từ-đầu lẫn transfer learning) trên Colab.
