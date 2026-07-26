@@ -153,8 +153,10 @@ Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file
 3. ✅ `src/models/train_gnn.py`: bỏ `"gcn"`, `"gat"` khỏi dict `models`, chỉ giữ `"graphsage"` (kèm dọn import không dùng nữa).
 4. ✅ Dựng lại Graph Builder cho **CẢ 2 bộ dữ liệu** — chạy bởi người dùng (local, không phải tôi chạy — theo yêu cầu "không tự ý train/chạy nền"). Phát sinh: file shard cũ (đa lớp) của CSE-CIC còn sót lại, `list_train_shards()` sẽ ưu tiên đọc nhầm — đã xoá shard cũ, chạy lại `shard_graphs.py` để chia shard mới đúng nhãn nhị phân (CSE-CIC 7 shard, UNSW-NB15 giờ cũng đủ lớn để chia 4 shard — trước đây 668 đồ thị không cần, giờ 6.692 đồ thị do đã giảm `WINDOW_SIZE`).
 5. ✅ Train lại baseline RF/XGBoost trên nhãn nhị phân, cả 2 bộ (local, người dùng tự chạy) — kết quả xem `docs/phases/phase3_model_training.md` mục 2026-07-26. Phát sinh lỗi `build_xgboost()` (đã sửa `baselines.py`, xem chi tiết ở đó).
-6. ⬜ Test cục bộ (pytest + smoke test) trước khi chạy Colab.
+6. ✅ Test cục bộ (pytest + smoke test) trước khi chạy Colab.
 7. ✅ Cập nhật `docs/phases/phase3_model_training.md` (bảng so sánh giờ đổi hoàn toàn ý nghĩa, ghi rõ đây là kết quả nhị phân, tách biệt khỏi bảng đa lớp cũ).
-8. ⬜ Commit + push, chạy lại toàn bộ trên Colab (GraphSAGE).
+8. ✅ Commit + push, chạy lại toàn bộ trên Colab (GraphSAGE) — đã train xong, kết quả val ghi tại `phase3_model_training.md`.
+
+**Tiếp nối:** đã hoàn thành thêm Thí nghiệm 1 (TN1) chính thức trên tập TEST (thêm `metrics.py` + `evaluate_test.py`, đủ 6 chỉ số) — xem `docs/phases/phase3_model_training.md` mục 2026-07-26 "Thí nghiệm 1 (TN1) chính thức trên tập TEST". Bước tiếp theo (chưa làm): Thí nghiệm 2 (TN2, đánh giá chéo bộ dữ liệu), GNNExplainer, kiểm định McNemar — xem `docs/00_research_plan.md` mục 7.4.
 
 **`train_gnn_transfer.py`:** không sửa, không dùng tiếp (đã xác nhận transfer learning không hiệu quả ở mục trước).

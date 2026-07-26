@@ -181,3 +181,48 @@
 **Lỗi kỹ thuật phát sinh + đã sửa:** `models/baselines.py` — `build_xgboost()` dùng cứng `objective="multi:softprob"` (viết cho đa lớp), khi chạy với 2 lớp gây lỗi tương thích đã biết của XGBoost (`.predict()` trả về mảng 2 chiều thay vì nhãn đơn, sklearn báo `"mix of binary and multilabel-indicator targets"`). Sửa: thêm nhánh dùng `objective="binary:logistic"` (không truyền `num_class`) khi `num_classes == 2`.
 
 **Việc cần làm tiếp:** dựng lại Graph Builder (đã xong, cả 2 bộ, nhãn nhị phân) → train GraphSAGE trên Colab → cập nhật bảng so sánh đầy đủ (baseline vs GraphSAGE, nhị phân).
+
+**2026-07-26 — GraphSAGE train xong trên Colab (`val_f1_macro` tốt nhất, nhãn nhị phân):**
+
+| Bộ dữ liệu | Random Forest | XGBoost | GraphSAGE |
+|---|---|---|---|
+| nf-cse-cic-ids2018-v2 | 0.9855 | **0.9900** | 0.9880 (epoch 16) |
+| nf-unsw-nb15-v2 | **0.9850** | 0.9837 | 0.9778 (epoch 32) |
+
+**Đánh giá thẳng thắn: GraphSAGE KHÔNG vượt trội baseline như kỳ vọng khi đổi hướng.** CSE-CIC: GraphSAGE nằm giữa RF và XGBoost, XGBoost vẫn cao nhất. UNSW-NB15: GraphSAGE **thua cả 2 baseline**. Vẫn là câu trả lời hợp lệ cho RQ1 (GNN hiệu quả tương đương ML truyền thống trên bài toán nhị phân), nhưng không có "đột phá" như có thể đã kỳ vọng lúc quyết định đổi hướng (xem mục trên, ngày 2026-07-26).
+
+**Chất lượng huấn luyện:** ổn định, không sụp đổ — confusion matrix cho thấy CSE-CIC: Benign 100%, Attack 95.9% đúng; UNSW-NB15: cả 2 lớp đều >98.7% đúng. Có 1-2 lần loss tăng đột biến giữa chừng (epoch 20 CSE-CIC, epoch 36 UNSW-NB15) rồi tự phục hồi — không ảnh hưởng kết quả cuối vì cơ chế lưu checkpoint tốt nhất theo `val_f1_macro` (không phải epoch cuối).
+
+**Lỗi phát hiện + đã sửa (không ảnh hưởng số liệu F1-macro/accuracy ở trên):** `train_gnn.py` hàm `load_class_names()` đọc nhầm `attack_label_mapping.json` (file ánh xạ tên cho bài toán **đa lớp** cũ) khi hiển thị confusion matrix cho bài toán **nhị phân** — khiến tên lớp hiện sai (vd "Bot" thay vì "Attack" cho CSE-CIC, "Backdoor" thay vì "Attack" cho UNSW-NB15). Đã sửa: khi `num_classes == 2`, trả thẳng `["Benign", "Attack"]`, không đọc file mapping đa lớp nữa. File confusion matrix CSV đã lưu trên Drive từ lượt train này vẫn còn tên sai — nếu cần dùng cho báo cáo, phải chạy lại suy luận (không cần train lại) để tạo file mới với tên đúng.
+
+## 2026-07-26 — Thí nghiệm 1 (TN1) chính thức trên tập TEST — thêm đủ 6 chỉ số + kết quả cuối cùng
+
+**Bổ sung code:** theo kế hoạch đã ghi ở mục trước (2026-07-24) — thêm `src/models/metrics.py` (hàm `compute_full_metrics()` dùng chung, tính Accuracy, Precision-macro, Recall-macro, F1-macro, AUC-ROC, MCC bằng `sklearn.metrics`) và `src/models/evaluate_test.py` (script **chỉ đọc** model đã train (`random_forest.joblib`, `xgboost.joblib`, `graphsage_best.pt`) + tập `test.parquet`/`test_graphs.pt`, chạy suy luận **đúng 1 lần**, không train/tinh chỉnh gì — đúng nguyên tắc `docs/00_research_plan.md` mục 4.1). Kết quả lưu tại `data/processed/test_metrics.csv`.
+
+**Kết quả chính thức trên tập TEST (chưa từng dùng để train/chọn checkpoint):**
+
+**CSE-CIC-IDS2018-v2:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.9940 | 0.9879 | 0.9832 | 0.9856 | 0.9862 | 0.9711 |
+| XGBoost | 0.9959 | **0.9975** | 0.9829 | **0.9901** | **0.9931** | **0.9804** |
+| GraphSAGE | 0.9950 | 0.9969 | 0.9795 | 0.9880 | 0.9888 | 0.9763 |
+
+**UNSW-NB15-v2:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.9977 | 0.9835 | 0.9867 | **0.9851** | 0.9995 | **0.9702** |
+| XGBoost | 0.9975 | 0.9798 | 0.9878 | 0.9838 | **0.9998** | 0.9676 |
+| GraphSAGE | 0.9964 | 0.9626 | **0.9938** | 0.9776 | 0.9994 | 0.9559 |
+
+**Nhận xét 1 — Xếp hạng không đổi so với val (XGBoost/RF vẫn nhỉnh hơn GraphSAGE trên F1-macro/MCC ở cả 2 bộ):**
+- CSE-CIC: XGBoost 🥇 (0.9901) > GraphSAGE 🥈 (0.9880) > RF 🥉 (0.9856)
+- UNSW-NB15: RF 🥇 (0.9851) > XGBoost 🥈 (0.9838) > GraphSAGE 🥉 (0.9776)
+
+**Nhận xét 2 — Val và test gần như giống hệt nhau, tín hiệu phương pháp luận tốt:** vd GraphSAGE CSE-CIC val F1=0.9880 → test F1=0.9880 (y hệt); GraphSAGE UNSW-NB15 val F1=0.9778 → test F1=0.9776 (chênh 0.0002); các cặp RF/XGBoost val-test cũng chênh lệch tối đa ~0.001. **Chứng minh việc chọn checkpoint theo val không bị "học tủ"/overfit lên tập val** — kết quả tổng quát hoá tốt sang dữ liệu hoàn toàn chưa từng thấy, đáng tin cậy để báo cáo.
+
+**Nhận xét 3 — GraphSAGE đánh đổi Precision lấy Recall ở UNSW-NB15:** GraphSAGE đạt Recall cao nhất (0.9938) trong cả 3 model, dù Precision thấp nhất (0.9626). Theo đúng nguyên tắc đã đặt ra ở `docs/00_research_plan.md` mục 6.1 ("bỏ sót tấn công nguy hiểm hơn báo động nhầm"), đây là điểm mạnh có thể nêu trong báo cáo: GraphSAGE bắt được nhiều tấn công thật hơn, đổi lại báo động nhầm nhiều hơn một chút — một góc nhìn tích cực dù F1-macro tổng thể thấp hơn baseline.
+
+**Kết luận RQ1 (chính thức):** GNN (GraphSAGE) đạt hiệu quả **tương đương, cạnh tranh được** với ML truyền thống (RF/XGBoost) trên bài toán phân loại nhị phân — không vượt trội nhưng cũng không thua kém đáng kể (chênh lệch F1-macro ~0.006-0.02), riêng về Recall ở UNSW-NB15 thì GraphSAGE còn tốt hơn baseline.

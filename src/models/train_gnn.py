@@ -72,6 +72,15 @@ def count_and_collect_labels(shard_paths: list[Path]) -> tuple[int, torch.Tensor
 
 
 def load_class_names(processed_dir: Path, folder_name: str, num_classes: int) -> list[str]:
+    # nhi phan (2026-07-26): "attack_label_mapping.json" la mapping cho Attack_encoded (da lop,
+    # vd 0=Benign, 1=Bot, 2=Brute Force-Web...) -- KHONG con dung duoc cho nhan Label (nhi phan,
+    # 0=Benign/1=Attack). Neu doc nham file do, index 1 se ra ten lop tan cong thu 2 theo
+    # alphabet trong bang da lop (vd "Bot"), khong phai "Attack" -- sai hoan toan y nghia,
+    # dung sai lam nham lan khi doc confusion matrix (F1-macro tinh tren nhan so 0/1 van dung,
+    # chi ten hien thi sai). Bo qua file mapping cu, tra thang ten nhi phan.
+    if num_classes == 2:
+        return ["Benign", "Attack"]
+
     mapping_path = processed_dir / folder_name / "attack_label_mapping.json"
     with open(mapping_path, encoding="utf-8") as f:
         mapping = json.load(f)
