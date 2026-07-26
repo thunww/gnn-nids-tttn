@@ -1,8 +1,8 @@
 # Kế hoạch triển khai GraphSAGE (E-GraphSAGE)
 
-**Trạng thái:** Chưa triển khai — tài liệu chuẩn bị trước để dùng khi bắt tay vào làm.
+**Trạng thái:** ✅ Đã triển khai (2026-07-26) — xem mục "Cập nhật sau khi triển khai" ở cuối file.
 
-**Điều kiện thực hiện** (theo `docs/00_research_plan.md` mục 5.3.4): đây là kiến trúc GNN thứ 3, **tuỳ chọn — chỉ làm nếu còn thời gian sau khi GCN/GAT đã ổn định**. Hiện GCN/GAT vẫn đang trong quá trình tinh chỉnh (đặc biệt bộ UNSW-NB15), nên **chưa bắt đầu việc này**. Không bắt buộc để hoàn thành đề tài — so sánh GCN (đơn giản) với GAT (attention) đã đủ trả lời RQ1 nếu không kịp làm thêm GraphSAGE.
+**Điều kiện thực hiện ban đầu** (theo `docs/00_research_plan.md` mục 5.3.4): đây là kiến trúc GNN thứ 3, tuỳ chọn — làm nếu còn thời gian sau khi GCN/GAT đã ổn định. **Quyết định đổi lịch trình (2026-07-26):** làm sớm hơn dự kiến, lý do xem `docs/decisions.md` mục "Ưu tiên GraphSAGE" — nghiên cứu y văn cho thấy GraphSAGE/E-GraphSAGE thường vượt trội GCN/GAT trong các bài báo NIDS, ngược với kết quả nội bộ hiện có (GCN đang thắng GAT) — muốn kiểm chứng trực tiếp trên dữ liệu của đề tài thay vì chỉ dựa vào GCN/GAT.
 
 ## 1. Dữ liệu sử dụng
 
@@ -70,3 +70,14 @@ h_uv = [h_u ; h_v]  →  đưa qua lớp phân loại đa lớp (kèm thêm edge
 ## Nguồn tham khảo
 
 - Lo, W. W., Layeghy, S., Sarhan, M., Gallagher, M., & Portmann, M. (2021). *E-GraphSAGE: A Graph Neural Network based Intrusion Detection System for IoT*. [arXiv:2103.16329](https://arxiv.org/abs/2103.16329) — công bố chính thức tại NOMS 2022 (IEEE/IFIP Network Operations and Management Symposium).
+
+## Cập nhật sau khi triển khai (2026-07-26)
+
+Triển khai đúng theo kế hoạch ở trên, không phát sinh sai khác lớn:
+
+- `src/models/sage_layer.py`: `EGraphSAGEConv(MessagePassing)` — cài đúng 3 bước công thức mục 3 (`message()` dùng `x_j` — quy ước PyG tự động lấy đặc trưng node nguồn theo từng cạnh, `update()` nhận `aggr_out` + `x` gốc, PyG tự đảm bảo 2 tensor này khớp chỉ số theo node đích).
+- `src/models/graphsage.py`: `GraphSAGEEdgeClassifier` — cấu trúc giống hệt `gcn.py`/`gat.py` (ghép embedding 2 đầu cạnh + `edge_attr` gốc, qua lớp phân loại đa lớp), tái sử dụng được nguyên vẹn `train_one_model()`, `evaluate()`, `compute_confusion()` đã có.
+- `src/models/train_gnn.py`: thêm `"graphsage": GraphSAGEEdgeClassifier(...)` vào dict `models` trong `run()` — dùng chung `hidden_dim` theo từng bộ dữ liệu (`HIDDEN_DIM_BY_DATASET`) và `DROPOUT_GCN` (chưa tách riêng siêu tham số dropout cho GraphSAGE, có thể tinh chỉnh sau nếu cần).
+- **Đơn giản hoá so với kế hoạch:** không lấy mẫu ngẫu nhiên hàng xóm (`SAGE_NUM_SAMPLES`) như GraphSAGE gốc — tổng hợp (sum) qua **toàn bộ** hàng xóm, giống cách GCN/GAT hiện có đang làm (không sampling). Lý do: nhất quán với code hiện tại, giảm rủi ro lỗi, và các cửa sổ đồ thị hiện không đủ lớn để sampling tạo khác biệt hiệu năng đáng kể.
+- Đã test cục bộ trên dữ liệu thật (UNSW-NB15, 6.692 đồ thị train, `HIDDEN_DIM=32`): chạy đúng, không lỗi, 2 epoch đầu đạt `val_f1_macro=0.3695` — xấp xỉ GCN cùng điều kiện (0.3738). Pytest + smoke test sharding vẫn pass.
+- **Cần làm tiếp:** chạy full 80 epoch trên Colab cho cả 2 bộ dữ liệu, cập nhật bảng so sánh tại `docs/phases/phase3_model_training.md`.

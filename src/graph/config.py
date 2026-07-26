@@ -6,11 +6,13 @@ SRC_IP_COL, SRC_PORT_COL, DST_IP_COL, DST_PORT_COL = IDENTIFIER_COLS
 
 # So dong (flow) moi do thi con -- co the khac nhau tung bo du lieu. CSE-CIC-IDS2018 dang
 # on dinh o 2_000 (giam tu 10_000 ngay 2026-07-19, xem docs/decisions.md), giu nguyen.
-# UNSW-NB15-v2 it host hon, nghi ngo can cua so lon hon 2_000 de du ngu canh hanh vi -- dang
-# thu 5_000 (2026-07-19).
+# UNSW-NB15-v2: tung thu 5_000 (2026-07-19, gia thuyet "can cua so lon hon" -- KHONG cai
+# thien nhu ky vong, xem luot 6 phase3_model_training.md). Giam manh xuong 500 (2026-07-24)
+# theo huong khac: UNSW-NB15-v2 chi co 668 do thi train (qua it cho GNN hoc), cua so nho hon
+# sinh nhieu do thi con hon tu cung luong flow tho (~10 lan) -- xem docs/decisions.md.
 WINDOW_SIZE_BY_DATASET = {
     "nf-cse-cic-ids2018-v2": 2_000,
-    "nf-unsw-nb15-v2": 5_000,
+    "nf-unsw-nb15-v2": 500,
 }
 WINDOW_OVERLAP = 0.5
 

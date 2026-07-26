@@ -26,10 +26,11 @@ def _build_one(args: tuple[pd.DataFrame, list[str]]):
     return build_graph(window, feature_cols)
 
 
-def run(processed_dir: Path, num_workers: int | None = None) -> None:
+def run(processed_dir: Path, num_workers: int | None = None, folder_names: list[str] | None = None) -> None:
     num_workers = num_workers or min(os.cpu_count() or 4, 8)
+    folder_names = folder_names or list(DATASETS)
 
-    for folder_name in DATASETS:
+    for folder_name in folder_names:
         print(f"=== {folder_name} ===")
 
         # Doc ban GIU NGUYEN THU TU GOC (chua xao/chia) -- moi cua so cat ra la lat cat
@@ -60,4 +61,7 @@ def run(processed_dir: Path, num_workers: int | None = None) -> None:
 
 if __name__ == "__main__":
     processed_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PROCESSED_DIR
-    run(processed_dir)
+    # bo dataset thu 3 (tuy chon): chi dung lai 1 bo, tranh dung lai bo khong doi gi
+    # (vd chi UNSW-NB15-v2 doi WINDOW_SIZE, CSE-CIC khong can dung lai, do mat rat lau).
+    folder_name_filter = sys.argv[2] if len(sys.argv) > 2 else None
+    run(processed_dir, folder_names=[folder_name_filter] if folder_name_filter else None)

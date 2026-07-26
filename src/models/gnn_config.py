@@ -3,6 +3,16 @@ from pathlib import Path
 # Tang 64->128 (2026-07-19): them dung luong cho bai toan 15 lop (CSE-CIC) + dac trung node
 # vua tang tu 4 len 43 chieu -- xem docs/decisions.md.
 HIDDEN_DIM = 128
+
+# HIDDEN_DIM rieng cho UNSW-NB15-v2 (2026-07-24): 128 giup CSE-CIC (13.224 do thi train, du
+# du lieu "nuoi" model lon) nhung lai HAI UNSW-NB15-v2 (chi 668 do thi) -- tai lieu GNN xac
+# nhan "smaller hidden dimension works well for smaller datasets... less likely to overfit
+# to noise". Giam ve 32 rieng cho bo nay, KHONG doi CSE-CIC. Chi ap dung cho train-tu-dau
+# (train_gnn.py) -- transfer learning (train_gnn_transfer.py) van dung HIDDEN_DIM=128 de
+# khop kich thuoc voi model nguon CSE-CIC. Xem docs/decisions.md.
+HIDDEN_DIM_BY_DATASET = {
+    "nf-unsw-nb15-v2": 32,
+}
 NUM_LAYERS = 2
 LEARNING_RATE = 0.001
 WEIGHT_DECAY = 5e-4  # L2 regularization, chong overfitting (dac biet cho GAT)

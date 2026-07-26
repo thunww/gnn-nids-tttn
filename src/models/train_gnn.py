@@ -15,18 +15,16 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from torch_geometric.loader import DataLoader
 
 from etl.config import DATASETS
-from models.gat import GATEdgeClassifier
-from models.gcn import GCNEdgeClassifier
+from models.graphsage import GraphSAGEEdgeClassifier
 from models.gnn_config import (
     BATCH_SIZE,
     CB_BETA,
     DEFAULT_PROCESSED_DIR,
-    DROPOUT_GAT,
     DROPOUT_GCN,
     EARLY_STOPPING_PATIENCE,
     EDGE_FEATURE_DIM,
-    GAT_HEADS,
     HIDDEN_DIM,
+    HIDDEN_DIM_BY_DATASET,
     LEARNING_RATE,
     LR_SCHEDULER_FACTOR,
     LR_SCHEDULER_PATIENCE,
@@ -248,7 +246,7 @@ def train_one_model(
     return best_path
 
 
-def run(processed_dir: Path, output_dir: Path | None = None) -> None:
+def run(processed_dir: Path, output_dir: Path | None = None, folder_names: list[str] | None = None) -> None:
     """processed_dir: noi doc du lieu do thi (*_graphs*.pt) -- tren Colab nen tro vao ban sao
     o dia cuc bo (/content/...), vi shard train duoc doc lai moi epoch, doc truc tiep tu Drive
     (FUSE mount, thong luong thap) se rat cham. output_dir: noi ghi checkpoint/model (mac dinh
@@ -256,10 +254,11 @@ def run(processed_dir: Path, output_dir: Path | None = None) -> None:
     neu phien bi ngat giua chung (file checkpoint nho, ghi truc tiep len Drive khong cham).
     """
     output_dir = output_dir or processed_dir
+    folder_names = folder_names or list(DATASETS)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
 
-    for folder_name in DATASETS:
+    for folder_name in folder_names:
         print(f"=== {folder_name} ===")
         train_shard_paths = list_train_shards(processed_dir, folder_name)
         val_graphs = load_graphs(processed_dir, folder_name, "val")
@@ -275,13 +274,14 @@ def run(processed_dir: Path, output_dir: Path | None = None) -> None:
         class_names = load_class_names(processed_dir, folder_name, num_classes)
 
         out_dir = output_dir / folder_name
+        hidden_dim = HIDDEN_DIM_BY_DATASET.get(folder_name, HIDDEN_DIM)
+        if hidden_dim != HIDDEN_DIM:
+            print(f"  HIDDEN_DIM rieng cho bo nay: {hidden_dim} (mac dinh {HIDDEN_DIM})")
 
         models = {
-            "gcn": GCNEdgeClassifier(
-                NODE_FEATURE_DIM, EDGE_FEATURE_DIM, HIDDEN_DIM, num_classes, NUM_LAYERS, DROPOUT_GCN
-            ),
-            "gat": GATEdgeClassifier(
-                NODE_FEATURE_DIM, EDGE_FEATURE_DIM, HIDDEN_DIM, num_classes, NUM_LAYERS, GAT_HEADS, DROPOUT_GAT
+            # 2026-07-26: chi con GraphSAGE (bo GCN/GAT) -- xem docs/decisions.md.
+            "graphsage": GraphSAGEEdgeClassifier(
+                NODE_FEATURE_DIM, EDGE_FEATURE_DIM, hidden_dim, num_classes, NUM_LAYERS, DROPOUT_GCN
             ),
         }
 
@@ -306,4 +306,7 @@ def run(processed_dir: Path, output_dir: Path | None = None) -> None:
 if __name__ == "__main__":
     processed_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PROCESSED_DIR
     output_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else None
-    run(processed_dir, output_dir)
+    # bo dataset thu 4 (tuy chon): chi train lai 1 bo, tranh train lai bo khong doi cau hinh gi
+    # (vd chi UNSW-NB15-v2 doi WINDOW_SIZE/HIDDEN_DIM, CSE-CIC khong can train lai, do mat rat lau).
+    folder_name_filter = sys.argv[3] if len(sys.argv) > 3 else None
+    run(processed_dir, output_dir, folder_names=[folder_name_filter] if folder_name_filter else None)

@@ -15,6 +15,7 @@
 - [ ] Nhật ký MLflow với số lượt chạy tối thiểu theo kế hoạch.
 - [ ] Chương lý thuyết + kiến trúc mô hình trong báo cáo cập nhật với tham số thực tế.
 - [ ] Cải tiến GNN (xem "Vấn đề phát sinh" bên dưới) trước khi dùng làm kết quả chính thức ở Giai đoạn 4.
+- [ ] Thêm Precision (macro), Recall (macro), AUC-ROC (macro, one-vs-rest), MCC vào code đánh giá (`evaluate()`/`compute_confusion()` trong `train_gnn.py`) — hiện chỉ có Accuracy + F1-macro + Confusion matrix. Làm ở Giai đoạn 4, ngay trước khi chạy Thí nghiệm 1 chính thức trên tập test (xem giải thích mục "Nhật ký cập nhật" 2026-07-24).
 
 ## Nhật ký cập nhật
 - 2026-07-18: Viết `src/models/` (`config.py`, `baselines.py`, `train_baseline.py`), huấn luyện Random Forest + XGBoost cho cả 2 bộ dữ liệu tại local (không cần GPU). Target: `Attack_encoded` (đa lớp). Kết quả trên tập val:
@@ -135,4 +136,48 @@
 
   Kết quả (`*_transfer_best.pt`, `*_transfer_confusion_matrix.csv`, lưu riêng không ghi đè model train-từ-đầu) — **cần chạy trên Colab để có số liệu thật**, cập nhật bảng so sánh sau khi có kết quả.
 
+- **2026-07-24 — rà soát bộ chỉ số đánh giá so với kế hoạch (mục 6.1 `docs/00_research_plan.md`).** Kế hoạch định nghĩa 6 chỉ số: Accuracy (tham khảo), Precision, Recall, F1-macro (chính), AUC-ROC, MCC — cộng thêm kiểm định McNemar (so sánh có ý nghĩa thống kê). Code hiện tại (`train_gnn.py`) mới chỉ tính **Accuracy + F1-macro + Confusion matrix** — thiếu Precision, Recall, AUC-ROC, MCC.
+
+  **Giải thích 4 chỉ số còn thiếu** (đều tính kiểu macro — trung bình cộng không trọng số qua các lớp, cùng tinh thần F1-macro):
+  - **Precision (macro):** `Precision_lớp_i = TP_i / (TP_i + FP_i)` — trong số các mẫu bị gắn nhãn "lớp i", bao nhiêu % đúng thật. Precision thấp = báo động giả nhiều (gây "mệt cảnh báo" cho đội vận hành, tốn công điều tra nhầm).
+  - **Recall (macro)** (= Detection Rate, DR — cách gọi trong nhiều bài báo NIDS, vd Sarhan et al.): `Recall_lớp_i = TP_i / (TP_i + FN_i)` — trong số mẫu thật sự thuộc lớp i, bắt được bao nhiêu %. Recall thấp = bỏ sót tấn công thật — **nguy hiểm hơn Precision thấp** trong bối cảnh an ninh mạng.
+  - **AUC-ROC (macro, one-vs-rest):** diện tích dưới đường cong ROC (True Positive Rate vs False Positive Rate ở mọi ngưỡng quyết định) — với đa lớp, tính kiểu "1-vs-còn-lại" cho từng lớp rồi lấy trung bình. Giá trị 0.5 = đoán ngẫu nhiên, 1.0 = phân loại hoàn hảo. Khác các chỉ số trên: **không phụ thuộc 1 ngưỡng quyết định cụ thể**, cần xác suất dự đoán (softmax) chứ không chỉ nhãn cuối cùng.
+  - **MCC (Matthews Correlation Coefficient):** hệ số tương quan giữa dự đoán và nhãn thật, dùng toàn bộ 4 thành phần TP/TN/FP/FN cùng lúc trong 1 công thức (`sklearn.metrics.matthews_corrcoef` hỗ trợ đa lớp sẵn). Giá trị từ -1 (dự đoán ngược hoàn toàn) đến 0 (ngẫu nhiên) đến +1 (hoàn hảo). Nhiều nghiên cứu (Chicco & Jurman, 2020) khuyến nghị đây là chỉ số **đáng tin cậy nhất khi dữ liệu mất cân bằng nghiêm trọng** — vì chỉ đạt điểm cao khi model dự đoán tốt đồng thời cả lớp đa số lẫn thiểu số, không thể "lách" bằng cách chỉ đoán tốt lớp đông (khác Accuracy/Weighted F1 dễ bị lớp đông chi phối — xem ví dụ thực tế đã phân tích ở bảng Sarhan et al. mục trên).
+
+  **Quyết định:** chưa thêm code ngay bây giờ — để dành **thêm vào cùng lúc với việc chạy Thí nghiệm 1 chính thức trên tập test ở Giai đoạn 4** (lúc đó mới là lần tính "điểm thật" duy nhất, tránh phải chạy lại đánh giá nhiều lần). Các lượt train hiện tại (Giai đoạn 3, dùng tập val để tinh chỉnh) vẫn chỉ cần Accuracy + F1-macro + Confusion matrix là đủ cho mục đích chọn mô hình/siêu tham số.
+
 - **2026-07-19 — lượt 8: làm giàu đặc trưng node (4→43 chiều) + tăng `HIDDEN_DIM` (64→128), áp dụng cho cả 2 bộ, cả GCN lẫn GAT.** Chi tiết đầy đủ (vì sao Node2Vec/line-graph bất khả thi, cách thay thế) xem [`docs/decisions.md`](../decisions.md) mục "Làm giàu đặc trưng node". Đã test cục bộ (shape, tốc độ, unit test) — **cần chạy lại Graph Builder + train lại toàn bộ (cả train-từ-đầu lẫn transfer learning) để có kết quả thật.**
+
+  **2026-07-24 — kết quả thật trên Colab (lượt 8, train-từ-đầu, sau khi sửa OOM bằng chia shard — xem `docs/decisions.md` mục 2026-07-24):** `val_f1_macro` tốt nhất:
+
+  | Bộ dữ liệu | Random Forest | XGBoost | GCN | GAT |
+  |---|---|---|---|---|
+  | nf-cse-cic-ids2018-v2 | 0.7479 | 0.8115 | **0.7437 (epoch 16)** — cao nhất từ trước tới giờ, nhích nhẹ so với đỉnh cũ (0.7390, lượt 5) | 0.6727 (epoch 2) — xấp xỉ đỉnh cũ (0.6751, lượt 5), nhưng **mất ổn định giữa chừng** (val_acc rơi từ 0.994 xuống 0.944-0.948 ở epoch 9-11 rồi hồi phục một phần đến 0.9716 ở epoch 17 lúc dừng sớm) |
+  | nf-unsw-nb15-v2 | 0.6694 | 0.6483 | 0.4024 (epoch 17) — **giảm** so với đỉnh cũ (0.4738, lượt 3; 0.4266, lượt 6) | 0.3721 (epoch 10) — **giảm** so với đỉnh cũ (0.4189, lượt 3; 0.3797, lượt 6) |
+
+  **Đánh giá: làm giàu đặc trưng node có lợi cho CSE-CIC-IDS2018 nhưng có hại cho UNSW-NB15-v2 — không đồng đều giữa 2 bộ như kỳ vọng ban đầu.**
+
+  **Giả thuyết nguyên nhân (chưa kiểm chứng thêm, cần lưu ý khi phân tích):** lượt này tăng cùng lúc 2 thứ làm phình to số tham số/độ phức tạp đầu vào — đặc trưng node (4→43, ~11 lần) và `HIDDEN_DIM` (64→128, gấp đôi tham số model). CSE-CIC có 13.224 đồ thị train — đủ dữ liệu để tận dụng model lớn hơn. UNSW-NB15-v2 chỉ có **668 đồ thị train** — tăng độ phức tạp đầu vào + gấp đôi tham số model trên cùng lượng dữ liệu ít ỏi này có khả năng gây khó tối ưu/overfit nhẹ (loss vẫn giảm đều nhưng F1-macro không theo kịp, thấp hơn cấu hình đơn giản hơn trước đó).
+
+  **Confusion matrix UNSW-NB15 (GCN, 0.4024):** vẫn cùng kiểu lỗi đã ghi nhận từ lượt 6 — `Backdoor`, `DoS`, `Shellcode`, `Worms` đều 0% (dồn vào `Fuzzers`/`Reconnaissance`/`Exploits`) — xác nhận lại vấn đề chồng lấn lớp cố hữu của bộ dữ liệu, không phải lỗi mới phát sinh từ đặc trưng node.
+
+  **Việc cần làm tiếp:** chạy `train_gnn_transfer.py` (lượt 7, đã code nhưng log lần này chưa thấy chạy) — kỳ vọng mượn trọng số từ CSE-CIC (nhiều dữ liệu) sẽ bù lại được phần thiệt của UNSW-NB15 khi model lớn hơn nhưng dữ liệu ít. Nếu transfer vẫn không cải thiện, cân nhắc tách riêng `HIDDEN_DIM`/`NODE_FEATURE_DIM` nhỏ hơn cho UNSW-NB15 (tương tự cách đã tách `WINDOW_SIZE_BY_DATASET`).
+
+## ⚠️ 2026-07-26 — ĐỔI SANG BÀI TOÁN NHỊ PHÂN, chỉ còn GraphSAGE — bảng dưới đây KHÔNG so sánh được với các bảng đa lớp phía trên
+
+**Bối cảnh đầy đủ + lý do: xem `docs/decisions.md` mục 2026-07-26.** Tóm tắt: đọc bài báo "Few Edges Are Enough" (arXiv:2501.16964) thấy E-GraphSAGE báo cáo F1=96.02% trên NF-CSE-CIC-IDS2018-v2 — sau khi xác minh, đó là **F1-macro trên bài toán nhị phân** (attack/benign), không phải đa lớp. Quyết định (của người thực hiện đề tài, sau khi đã cảnh báo đánh đổi): đổi hẳn sang nhị phân + chỉ dùng GraphSAGE (bỏ GCN/GAT), ưu tiên điểm số dễ đạt và demo dễ hiểu hơn.
+
+**Baseline train lại trên nhãn nhị phân (`Label`), kết quả thật (tập val):**
+
+| Bộ dữ liệu | Model | Accuracy | F1-macro |
+|---|---|---|---|
+| nf-cse-cic-ids2018-v2 | Random Forest | 0.9939 | 0.9855 |
+| nf-cse-cic-ids2018-v2 | XGBoost | 0.9959 | 0.9900 |
+| nf-unsw-nb15-v2 | Random Forest | 0.9977 | 0.9850 |
+| nf-unsw-nb15-v2 | XGBoost | 0.9975 | 0.9837 |
+
+**So với baseline đa lớp cũ (bảng đầu file, không xoá — giữ để đối chiếu):** CSE-CIC RF 0.7479→0.9855, XGBoost 0.8115→0.9900; UNSW-NB15 RF 0.6694→0.9850, XGBoost 0.6483→0.9837 — **tăng vọt ~0.2-0.35 điểm F1-macro**. Đúng như đã phân tích trước khi đổi hướng: đây là do bài toán **dễ hơn hẳn** (2 lớp thay vì 15/10 lớp), không phải do baseline "học tốt hơn" — cần diễn đạt đúng bản chất này khi viết báo cáo, tránh gây hiểu nhầm là có đột phá về phương pháp.
+
+**Lỗi kỹ thuật phát sinh + đã sửa:** `models/baselines.py` — `build_xgboost()` dùng cứng `objective="multi:softprob"` (viết cho đa lớp), khi chạy với 2 lớp gây lỗi tương thích đã biết của XGBoost (`.predict()` trả về mảng 2 chiều thay vì nhãn đơn, sklearn báo `"mix of binary and multilabel-indicator targets"`). Sửa: thêm nhánh dùng `objective="binary:logistic"` (không truyền `num_class`) khi `num_classes == 2`.
+
+**Việc cần làm tiếp:** dựng lại Graph Builder (đã xong, cả 2 bộ, nhãn nhị phân) → train GraphSAGE trên Colab → cập nhật bảng so sánh đầy đủ (baseline vs GraphSAGE, nhị phân).
