@@ -1,21 +1,24 @@
 # Giai đoạn 3 — Xây dựng và huấn luyện mô hình
 
 **Thời gian dự kiến:** Tuần 3
-**Trạng thái:** Phát hiện + sửa lỗi kiến trúc nghiêm trọng ở Giai đoạn 2 (đồ thị bị dựng từ dữ liệu xáo trộn thứ tự — xem `docs/decisions.md` 2026-07-19) — 2 lượt train GCN/GAT trước đó (dưới đây) đều dựa trên đồ thị lỗi, **cần train lại từ đầu sau khi Graph Builder chạy lại**
+**Trạng thái hiện tại (cập nhật 2026-07-27):** ĐÃ HOÀN THÀNH train + Thí nghiệm 1 + Thí nghiệm 2 (Giai đoạn 4). Kiến trúc GNN dùng thật hiện nay: **chỉ GraphSAGE (E-GraphSAGE), bài toán NHỊ PHÂN** — GCN/GAT và bài toán đa lớp đã bị bỏ ngày 2026-07-26 (xem `docs/decisions.md` mục "📌 Tóm tắt trạng thái hiện tại" và mục 2026-07-26). Toàn bộ nội dung GCN/GAT/đa lớp ở phần "Nhật ký cập nhật" bên dưới là **lịch sử, đã lỗi thời** — giữ lại để truy vết, không dùng viết báo cáo kết quả chính thức. Kết quả chính thức nằm ở 2 mục cuối file: "Thí nghiệm 1 (TN1) chính thức trên tập TEST" và "Thí nghiệm 2 (TN2) — đánh giá chéo bộ dữ liệu", cả 2 đều ngày 2026-07-26/27.
 
-## Mục tiêu
-- Hiện thực và huấn luyện GCN, GAT (tối ưu siêu tham số bằng Optuna).
-- Hiện thực hai baseline Random Forest, XGBoost.
-- Theo dõi thực nghiệm bằng MLflow (tracking dir trỏ vào Google Drive).
-- Checkpoint mô hình sau mỗi epoch.
+## Mục tiêu (đã thay đổi so với lúc đầu — xem trạng thái hiện tại ở trên)
+- ~~Hiện thực và huấn luyện GCN, GAT~~ → chỉ còn GraphSAGE (E-GraphSAGE).
+- Hiện thực hai baseline Random Forest, XGBoost — vẫn giữ, đã train lại trên nhãn nhị phân.
+- ~~Theo dõi thực nghiệm bằng MLflow~~ — không triển khai (không nằm trong phạm vi thực tế đã làm).
+- Checkpoint mô hình sau mỗi epoch — đã làm (`train_gnn.py`).
 
-## Đầu ra kiểm chứng được
-- [x] Trọng số mô hình Random Forest + XGBoost cho cả 2 bộ dữ liệu.
-- [x] Trọng số mô hình GCN + GAT cho cả 2 bộ dữ liệu (lượt đầu, chưa tối ưu siêu tham số).
-- [ ] Nhật ký MLflow với số lượt chạy tối thiểu theo kế hoạch.
-- [ ] Chương lý thuyết + kiến trúc mô hình trong báo cáo cập nhật với tham số thực tế.
-- [ ] Cải tiến GNN (xem "Vấn đề phát sinh" bên dưới) trước khi dùng làm kết quả chính thức ở Giai đoạn 4.
-- [ ] Thêm Precision (macro), Recall (macro), AUC-ROC (macro, one-vs-rest), MCC vào code đánh giá (`evaluate()`/`compute_confusion()` trong `train_gnn.py`) — hiện chỉ có Accuracy + F1-macro + Confusion matrix. Làm ở Giai đoạn 4, ngay trước khi chạy Thí nghiệm 1 chính thức trên tập test (xem giải thích mục "Nhật ký cập nhật" 2026-07-24).
+## Đầu ra kiểm chứng được (cập nhật theo thực tế đã làm)
+- [x] Trọng số mô hình Random Forest + XGBoost cho cả 2 bộ dữ liệu (nhãn nhị phân).
+- [x] Trọng số mô hình GraphSAGE cho cả 2 bộ dữ liệu (GCN + GAT — lỗi thời, không dùng nữa).
+- [x] Đủ 6 chỉ số đánh giá (Accuracy, Precision, Recall, F1-macro, AUC-ROC, MCC) — `src/models/metrics.py`, đã dùng cho TN1 + TN2.
+- [x] Thí nghiệm 1 (TN1, tập test chính thức) — xong, xem mục 2026-07-26.
+- [x] Thí nghiệm 2 (TN2, đánh giá chéo bộ dữ liệu) — xong, xem mục 2026-07-27.
+- [ ] Nhật ký MLflow — không triển khai, bỏ khỏi phạm vi.
+- [ ] Chương lý thuyết + kiến trúc mô hình trong báo cáo cập nhật với tham số thực tế (E-GraphSAGE, nhị phân).
+- [ ] GNNExplainer, kiểm định McNemar (Giai đoạn 4, chưa làm).
+- [ ] Thí nghiệm 6 / mô phỏng real-time (VMware + Zeek + Suricata) — **đã xác nhận sẽ làm, chưa bắt đầu**, xem `docs/decisions.md` mục "Thí nghiệm 6 / mô phỏng real-time" để có checklist chi tiết.
 
 ## Nhật ký cập nhật
 - 2026-07-18: Viết `src/models/` (`config.py`, `baselines.py`, `train_baseline.py`), huấn luyện Random Forest + XGBoost cho cả 2 bộ dữ liệu tại local (không cần GPU). Target: `Attack_encoded` (đa lớp). Kết quả trên tập val:
@@ -226,3 +229,41 @@
 **Nhận xét 3 — GraphSAGE đánh đổi Precision lấy Recall ở UNSW-NB15:** GraphSAGE đạt Recall cao nhất (0.9938) trong cả 3 model, dù Precision thấp nhất (0.9626). Theo đúng nguyên tắc đã đặt ra ở `docs/00_research_plan.md` mục 6.1 ("bỏ sót tấn công nguy hiểm hơn báo động nhầm"), đây là điểm mạnh có thể nêu trong báo cáo: GraphSAGE bắt được nhiều tấn công thật hơn, đổi lại báo động nhầm nhiều hơn một chút — một góc nhìn tích cực dù F1-macro tổng thể thấp hơn baseline.
 
 **Kết luận RQ1 (chính thức):** GNN (GraphSAGE) đạt hiệu quả **tương đương, cạnh tranh được** với ML truyền thống (RF/XGBoost) trên bài toán phân loại nhị phân — không vượt trội nhưng cũng không thua kém đáng kể (chênh lệch F1-macro ~0.006-0.02), riêng về Recall ở UNSW-NB15 thì GraphSAGE còn tốt hơn baseline.
+
+## 2026-07-27 — Thí nghiệm 2 (TN2) — đánh giá chéo bộ dữ liệu (RQ2, khả năng tổng quát hoá)
+
+**Cách làm:** viết `src/models/evaluate_cross_dataset.py` — dùng lại model đã train trên bộ NGUỒN (KHÔNG train/tinh chỉnh lại gì), chạy suy luận trên tập test của bộ ĐÍCH. Điểm quan trọng về phương pháp luận: **áp lại đúng scaler + ngưỡng clip (`upper_bound`) của bộ NGUỒN** lên dữ liệu bộ ĐÍCH (thay vì để bộ đích tự scale theo thống kê riêng của nó) — mô phỏng đúng tình huống thực tế "đem model đã train đi triển khai ở môi trường mới, không có sẵn thống kê nơi đó". Để làm được, phải sửa `src/etl/run_etl.py`/`scale.py` lưu thêm `upper_bound.joblib` (trước đó tính xong rồi bỏ, không lưu) — chạy lại ETL 1 lần (an toàn, không đổi dữ liệu/model đã có, chỉ thêm 1 file mới).
+
+**Kết quả (KHÔNG train lại, chỉ suy luận, tập test):**
+
+**Train CSE-CIC-IDS2018 → Test UNSW-NB15:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.9602 | 0.4801 | 0.5000 | 0.4899 | 0.2772 | 0.0000 |
+| XGBoost | 0.9607 | 0.8501 | 0.5083 | 0.5065 | 0.3348 | 0.1080 |
+| GraphSAGE | 0.8846 | 0.4783 | 0.4616 | 0.4698 | **0.0199** | -0.0577 |
+
+**Train UNSW-NB15 → Test CSE-CIC-IDS2018:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.7940 | 0.4396 | 0.4538 | 0.4465 | 0.2239 | -0.1056 |
+| XGBoost | 0.8605 | 0.4638 | 0.4925 | 0.4701 | 0.1689 | -0.0329 |
+| GraphSAGE | 0.5050 | 0.4192 | 0.3172 | 0.3502 | 0.4604 | -0.2430 |
+
+**Đánh giá: cả 3 model đều sụp đổ nghiêm trọng khi đổi môi trường mạng — MCC quanh 0 hoặc ÂM, AUC-ROC nhiều trường hợp dưới 0.5 (có nơi chỉ 0.0199)** — tệ hơn cả đoán ngẫu nhiên theo nghĩa thống kê. **GraphSAGE không thể hiện ưu thế tổng quát hoá tốt hơn baseline như kỳ vọng ban đầu của kế hoạch nghiên cứu** (`docs/00_research_plan.md` mục 6.3) — thậm chí tệ hơn baseline ở chiều UNSW→CSE-CIC (F1=0.35 so với XGBoost 0.47).
+
+**Đã điều tra kỹ, xác nhận đây KHÔNG PHẢI lỗi code:** đo trực tiếp cho thấy **69.2% số dòng dữ liệu UNSW-NB15**, sau khi quy đổi đúng cách sang thang đo của CSE-CIC, rơi vào vùng giá trị cực đoan (|z-score| > 5) — vùng model CSE-CIC chưa từng thấy lúc train (bình thường tỷ lệ này chỉ ~0.0001%). Hai môi trường mạng khác biệt tới mức việc "quy đổi đúng thang đo" vẫn đẩy hầu hết dữ liệu ra ngoài phạm vi model từng học được.
+
+**Xác nhận độc lập bằng y văn (không phải hiện tượng lạ/riêng của đề tài):**
+- 1 nghiên cứu định lượng đúng vấn đề trôi dạt đặc trưng (feature drift) giữa các bộ NIDS: 36/45 đặc trưng chung vượt ngưỡng "trôi dạt nghiêm trọng" (PSI ≥ 0.25), thống kê KS tới 0.79.
+- 1 nghiên cứu khác ghi nhận thẳng: mô hình đạt độ chính xác gần hoàn hảo trong-cùng-bộ có thể "collapse xuống mức ngang đoán ngẫu nhiên" khi đổi bộ dữ liệu — đúng hiện tượng quan sát được ở đây.
+
+**Giải thích tại sao GraphSAGE không có ưu thế tổng quát hoá như 1 số bài báo khác báo cáo:** `NODE_FEATURE_DIM=43` gồm chỉ 4 chiều cấu trúc thuần (bậc, PageRank, clustering — bất biến theo quy mô mạng) nhưng tới 39 chiều còn lại là trung bình cộng của **chính các đặc trưng thô nhạy quy mô mạng** (byte, throughput...) — cùng loại thông tin gây hại cho baseline. Edge_attr thô cũng được đưa **trực tiếp** vào công thức message passing của E-GraphSAGE (đây là lý do chọn E-GraphSAGE thay GraphSAGE gốc — không phí thông tin cạnh). Cái giá: ưu thế "học cấu trúc, bất biến quy mô" bị pha loãng gần hết bởi phần thông tin thô chiếm đa số chiều đặc trưng.
+
+**⚠️ Đính chính 1 thông tin đã trích dẫn sai ở phần trao đổi trước khi ghi docs:** ban đầu có nói bài Anomal-e (arXiv:2207.06819, self-supervised) "vượt trội GraphSAGE về khả năng tổng quát hoá giữa 2 bộ" — **sai**, đã đọc lại bản đầy đủ và xác nhận **bài đó không hề làm đánh giá cross-dataset**, chỉ so sánh trong-cùng-bộ (Anomal-E-HBOS đạt 88-95% F1 vs GraphSAGE-HBOS 82.54% F1 trung bình, cùng kiểu đánh giá anomaly detection, khác bài toán phân loại nhị phân đang làm ở đây). **Không tìm được nghiên cứu nào công bố số liệu self-supervised GNN cho đúng kiểu đánh giá TN2 (train 1 bộ, test bộ khác) trên đúng cặp NF-UNSW-NB15-v2/NF-CSE-CIC-IDS2018-v2** — đây là khoảng trống nghiên cứu thật (research gap), không phải hướng đã được chứng minh sẽ giải quyết được vấn đề tổng quát hoá quan sát được ở đây.
+
+**Kết luận RQ2 (chính thức):** mô hình (cả GNN lẫn ML truyền thống) huấn luyện trên 1 môi trường mạng **không tổng quát hoá được** sang môi trường mạng khác nếu không tinh chỉnh lại — đây là hạn chế thật, có bằng chứng định lượng (69.2% dữ liệu ngoài phạm vi phân phối train) và được xác nhận độc lập bởi y văn (feature drift, "collapse to random"). Giả thuyết ban đầu "GNN tổng quát hoá tốt hơn nhờ học cấu trúc" (kế hoạch nghiên cứu mục 6.3) **không được xác nhận** với kiến trúc E-GraphSAGE cụ thể đã triển khai — lý do kỹ thuật cụ thể: tỷ trọng đặc trưng thô/nhạy-quy-mô-mạng trong node feature quá cao so với phần cấu trúc thuần.
+
+**Quyết định: không cố "sửa" để ra số đẹp hơn.** TN2 vốn thiết kế để KIỂM TRA khả năng tổng quát hoá, không phải để tối ưu điểm số — kết quả kém chính là câu trả lời khoa học thật cho câu hỏi nghiên cứu (RQ2), có giá trị đưa vào phần "Hạn chế và hướng phát triển" của báo cáo. Hướng cải thiện tiềm năng (self-supervised learning, kiểu Anomal-E) được ghi nhận là **hướng nghiên cứu tương lai chưa kiểm chứng**, không triển khai ngay do khối lượng công việc lớn (đổi toàn bộ phạm trù huấn luyện, không phải sửa nhỏ) và không có bằng chứng y văn đảm bảo giải quyết được đúng vấn đề này.

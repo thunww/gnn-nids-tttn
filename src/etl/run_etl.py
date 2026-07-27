@@ -59,6 +59,11 @@ def run(raw_dir: Path, processed_dir: Path) -> None:
         print(f"  full_chronological={len(df)} dong (danh cho Graph Builder)")
 
         joblib.dump(scaler, out_dir / "scaler.joblib")
+        # luu them upper_bound (nguong clip outlier da fit tu train) -- can cho Thi nghiem 2
+        # (danh gia cheo bo du lieu): ap dung dung scaler+upper_bound cua bo NGUON len du lieu
+        # THO cua bo DICH, thay vi de bo dich tu scale rieng (gay nhieu lech thang do, xem
+        # docs/decisions.md).
+        joblib.dump(upper_bound, out_dir / "upper_bound.joblib")
         with open(out_dir / "attack_label_mapping.json", "w", encoding="utf-8") as f:
             json.dump(attack_mapping, f, ensure_ascii=False, indent=2)
 

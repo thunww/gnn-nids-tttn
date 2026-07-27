@@ -2,6 +2,19 @@
 
 Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file — tránh lặp lại giải thích rải rác trong từng `docs/phases/*.md`, các phase liên quan chỉ trỏ link về đây.
 
+## 📌 Tóm tắt trạng thái hiện tại (cập nhật 2026-07-27) — đọc mục này trước khi đọc phần lịch sử bên dưới
+
+File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều quyết định bên dưới đã bị **đảo ngược sau đó**. Để tránh nhầm lẫn khi đọc lướt, trạng thái **đang dùng thật sự** hiện tại là:
+
+- **Bài toán: NHỊ PHÂN** (`Label`: 0=Benign/1=Attack) — KHÔNG phải đa lớp. (Đổi ngày 2026-07-26, đảo ngược quyết định đa lớp ngày 2026-07-18 bên dưới.)
+- **Kiến trúc GNN: chỉ còn GraphSAGE** (đúng ra là **E-GraphSAGE**, có dùng đặc trưng cạnh) — **KHÔNG còn GCN/GAT** trong luồng train chính (`train_gnn.py`). Code `gcn.py`/`gat.py` vẫn còn trong repo (không xoá) nhưng không dùng nữa.
+- **Baseline:** Random Forest + XGBoost, train trên cùng nhãn nhị phân.
+- **Đã hoàn thành:** Thí nghiệm 1 (TN1, đánh giá trong-cùng-bộ trên tập test) và Thí nghiệm 2 (TN2, đánh giá chéo bộ dữ liệu) — xem `docs/phases/phase3_model_training.md` các mục ngày 2026-07-26 và 2026-07-27.
+- **Chưa làm:** GNNExplainer, kiểm định McNemar, Thí nghiệm 6/mô phỏng real-time (VMware + Zeek + Suricata) — xem mục cuối file này.
+- **Mọi kết quả liên quan GCN/GAT/đa lớp trong lịch sử bên dưới đều đã LỖI THỜI** — chỉ giữ lại để truy vết quá trình ra quyết định (phục vụ giải trình trước hội đồng nếu cần), không dùng để viết kết quả chính thức vào báo cáo.
+
+---
+
 ## 2026-07-18 — Bài toán phân loại: đa lớp, không phải nhị phân
 
 **Quyết định:** Cả baseline (Random Forest, XGBoost) lẫn GNN (GCN, GAT) đều dự đoán **đa lớp** — cột `Attack_encoded` (Benign hoặc 1 trong các loại tấn công cụ thể: DDoS, SSH-Bruteforce, PortScan...) — không phải nhị phân (`Label`: 0/1, chỉ "bình thường/tấn công").
@@ -160,3 +173,36 @@ Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file
 **Tiếp nối:** đã hoàn thành thêm Thí nghiệm 1 (TN1) chính thức trên tập TEST (thêm `metrics.py` + `evaluate_test.py`, đủ 6 chỉ số) — xem `docs/phases/phase3_model_training.md` mục 2026-07-26 "Thí nghiệm 1 (TN1) chính thức trên tập TEST". Bước tiếp theo (chưa làm): Thí nghiệm 2 (TN2, đánh giá chéo bộ dữ liệu), GNNExplainer, kiểm định McNemar — xem `docs/00_research_plan.md` mục 7.4.
 
 **`train_gnn_transfer.py`:** không sửa, không dùng tiếp (đã xác nhận transfer learning không hiệu quả ở mục trước).
+
+## 2026-07-27 — Thí nghiệm 2 (TN2) hoàn thành: kết quả kém, đã điều tra kỹ, kết luận giữ nguyên hướng đi
+
+**Tóm tắt:** TN2 (đánh giá chéo bộ dữ liệu, `src/models/evaluate_cross_dataset.py`) cho kết quả rất kém ở cả 3 model (MCC quanh 0/âm, AUC-ROC có nơi dưới 0.5) — số liệu đầy đủ + phân tích chi tiết xem `docs/phases/phase3_model_training.md` mục 2026-07-27.
+
+**Đã điều tra kỹ trước khi kết luận (không vội cho là lỗi hay vội chấp nhận):**
+1. Kiểm tra thứ tự cột đặc trưng giữa `full_chronological.parquet` và `train.parquet` (khớp) và giữa 2 bộ dữ liệu (khớp, 46 cột cùng tên cùng thứ tự) — loại trừ khả năng lỗi ánh xạ cột.
+2. Kiểm tra quy ước nhãn `Label` (0=Benign/1=Attack) giữa 2 bộ — khớp nhau, loại trừ khả năng đảo nhãn.
+3. Đo trực tiếp: 69.2% dữ liệu UNSW-NB15 sau khi quy đổi đúng cách sang thang đo CSE-CIC rơi vào vùng cực đoan (|z|>5, ngoài phạm vi model từng học) — xác nhận đây là hiện tượng trôi dạt phân phối (distribution drift) thật, không phải lỗi code.
+4. Đối chiếu y văn: tìm được nghiên cứu độc lập đo lường đúng hiện tượng này (36/45 đặc trưng NIDS vượt ngưỡng trôi dạt nghiêm trọng PSI≥0.25 giữa các bộ dữ liệu khác) — xác nhận không phải hiện tượng lạ riêng của đề tài.
+
+**Cân nhắc hướng "sửa" (self-supervised learning, kiểu Anomal-E) — quyết định KHÔNG làm ngay:**
+- Đã đọc lại kỹ bài Anomal-E (arXiv:2207.06819) — **đính chính**: bài này KHÔNG hề đánh giá cross-dataset (chỉ within-dataset), thông tin trích dẫn ban đầu trong hội thoại là sai (dựa trên tóm tắt tìm kiếm chưa kiểm chứng). Không tìm được bất kỳ nghiên cứu nào công bố số liệu self-supervised GNN cho đúng kiểu TN2 trên đúng cặp dữ liệu này — đây là khoảng trống nghiên cứu, không phải giải pháp đã được chứng minh.
+- Tự phân tích kỹ thuật: sở dĩ GraphSAGE không có ưu thế tổng quát hoá là do `NODE_FEATURE_DIM=43` chỉ có 4/43 chiều là cấu trúc thuần (bất biến quy mô mạng), còn 39/43 chiều + `edge_attr` đưa thẳng vào message passing đều là đặc trưng thô nhạy quy mô mạng — pha loãng gần hết ưu thế lý thuyết của kiến trúc đồ thị.
+- Chuyển sang self-supervised là đổi TOÀN BỘ phạm trù huấn luyện (không phải sửa nhỏ), không có bằng chứng đảm bảo giải quyết đúng vấn đề — quyết định: **không triển khai**, ghi nhận là hướng nghiên cứu tương lai trong báo cáo.
+
+**Kết luận cuối cùng: giữ nguyên hướng đang làm (supervised, E-GraphSAGE, nhị phân).** Kết quả TN2 kém KHÔNG phải lý do để đổi hướng — đây là câu trả lời khoa học thật, hợp lệ cho RQ2, có bằng chứng định lượng + xác nhận độc lập từ y văn, phù hợp đưa vào phần "Hạn chế và hướng phát triển" của báo cáo thay vì cố "sửa" để ra số đẹp hơn (sẽ làm mất giá trị khoa học thật của thí nghiệm).
+
+## 2026-07-27 — Thí nghiệm 6 / mô phỏng real-time — đã xác nhận SẼ LÀM, kế hoạch (chưa bắt đầu)
+
+**Bối cảnh:** sau khi TN1+TN2 xong, đã hỏi lại khung quyết định ở `docs/00_research_plan.md` mục 4.3 (có cần demo tấn công real-time trước hội đồng hay không). Người thực hiện đề tài xác nhận: **có**, sẽ dựng môi trường lab thật (Phương án A). Đây là công việc **khác hẳn phạm vi đã làm** (không còn là xử lý dữ liệu/train model, mà là dựng hạ tầng mạng thật) — tạm dừng, ưu tiên viết báo cáo với kết quả đã có (TN1+TN2) trước, quay lại làm sau.
+
+**Checklist các việc cần làm khi bắt tay vào** (theo đúng `docs/00_research_plan.md` mục 4.3-4.4, phân rõ việc của người dùng vs việc code):
+
+1. ⬜ Dựng VMware: máy tấn công + máy nạn nhân + máy giám sát, mạng **host-only, cô lập hoàn toàn khỏi Internet** (bắt buộc theo mục 4.4 — kể cả kịch bản DoS cũng chỉ chạy trong mạng ảo cục bộ). *(Người dùng tự làm.)*
+2. ⬜ Cài Zeek trên máy giám sát, bật Promiscuous Mode để bắt toàn bộ traffic. *(Người dùng tự làm.)*
+3. ⬜ Chạy lần lượt 5 kịch bản tấn công đã hoạch định trong máy ảo, ghi lại chính xác thời điểm/loại tấn công (để gán nhãn đúng sau này). *(Người dùng tự làm.)*
+4. ⬜ Viết code chuyển log Zeek → đúng định dạng đặc trưng NetFlow V2 (43-49 cột, khớp schema đã dùng để train) — **bước kỹ thuật khó nhất**, log Zeek không giống định dạng NF-v2 (khác tên cột, khác cách tính 1 số chỉ số), sai bước này model sẽ dự đoán vô nghĩa. *(Cần code hỗ trợ.)*
+5. ⬜ Viết script nạp dữ liệu đã chuyển đổi qua model đã train (GraphSAGE + baseline) để phân loại. *(Cần code hỗ trợ, tái sử dụng được `evaluate_test.py`/`evaluate_cross_dataset.py` làm khung tham khảo.)*
+6. ⬜ Cài Suricata + ET Open Rules trên cùng traffic. *(Người dùng tự làm.)*
+7. ⬜ Viết script so sánh kết quả model vs Suricata (TP/FP/FN từng bên) trên cùng traffic đã gán nhãn thủ công ở bước 3. *(Cần code hỗ trợ.)*
+
+**Rủi ro kỹ thuật đã ghi nhận trước trong kế hoạch gốc:** cấu hình VMware/Promiscuous Mode, độ chính xác gán nhãn thủ công (mục 4.3, bảng khung quyết định).
