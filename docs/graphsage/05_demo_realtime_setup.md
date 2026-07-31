@@ -149,26 +149,32 @@ sudo bash scripts/victim_setup.sh
 
 **5 kịch bản, chạy từ Kali (194) nhắm vào victim (199)** — mỗi kịch bản chạy RIÊNG LẺ, cách nhau vài chục giây traffic nền yên tĩnh, và **ghi lại chính xác giờ:phút:giây bắt đầu/kết thúc** (dùng `date` trước/sau mỗi lệnh) — bắt buộc theo Phase C để đối chiếu nhãn thật với dự đoán model sau này.
 
+**⚠️ QUAN TRỌNG (phát hiện 2026-07-31) — máy monitor (200) chỉ có 2 CPU / 3.3GB RAM:** tốc độ tấn công quá nhanh (`-T5`, `--min-rate 3000`, `hping3 --flood`) làm **Zeek quá tải, bỏ sót 87-99.8% gói tin thật** (đo được qua `capture_loss.log`, xem `docs/decisions.md` để biết chi tiết chẩn đoán) — flow ghi lại bị rỗng (thiếu gói phản hồi), khiến model không có đủ dữ liệu để phát hiện đúng, DÙ code hoàn toàn không lỗi. Tốc độ trong các lệnh dưới đây **đã giảm phù hợp với phần cứng thật của máy 200** — không tự ý tăng lại `--min-rate`/dùng `--flood` nếu muốn kết quả phát hiện đáng tin cậy. Trước khi chạy bất kỳ kịch bản nào, nên:
+1. Tăng bộ đệm capture của Zeek 1 lần duy nhất: `sudo bash -c 'echo "redef Pcap::bufsize = 256;" >> /opt/zeek/share/zeek/site/local.zeek' && sudo /opt/zeek/bin/zeekctl deploy`
+2. **Dừng `background_traffic_generator.py`** trước khi chạy tấn công thật (chạy nó trước để làm gần đầy cửa sổ, rồi tắt đi) — chạy đồng thời cả 2 sẽ cộng dồn tải, dễ làm Zeek quá tải trở lại.
+
 **1. Port scan (trinh sát — Reconnaissance):**
 ```bash
-date; nmap -sS -p- 192.168.207.199; date
+date; nmap -T3 -p- --min-rate 50 --max-rate 200 192.168.207.199; date
 ```
+(script sẵn: `bash scripts/run_scenario_portscan.sh 192.168.207.199`)
 
 **2. Brute-force SSH:**
 ```bash
 date; hydra -l demo_target -P /usr/share/wordlists/rockyou.txt -t 4 ssh://192.168.207.199 ; date
 ```
-(Nếu muốn nhanh, tạo wordlist ngắn chứa sẵn mật khẩu đúng ở đầu: `printf "123456\nPassw0rd123\npassword\n" > /tmp/wl.txt` rồi dùng `-P /tmp/wl.txt`.)
+(Nếu muốn nhanh, tạo wordlist ngắn chứa sẵn mật khẩu đúng ở đầu: `printf "123456\nPassw0rd123\npassword\n" > /tmp/wl.txt` rồi dùng `-P /tmp/wl.txt`. Đây là kịch bản có khả năng bị phát hiện đúng CAO NHẤT trong 5 kịch bản — mỗi lần thử là 1 kết nối TCP đầy đủ, có trao đổi dữ liệu thật, tốc độ tự nhiên đã chậm do SSH giới hạn xác thực nên không gây quá tải Zeek.)
 
 **3. Brute-force FTP:**
 ```bash
 date; hydra -l demo_target -P /tmp/wl.txt ftp://192.168.207.199 ; date
 ```
 
-**4. DoS lớp mạng — SYN Flood (cần `hping3`, có sẵn trên Kali):**
+**4. DoS lớp mạng — SYN Flood (cần `hping3`, có sẵn trên Kali) — KHÔNG dùng `--flood`:**
 ```bash
-date; sudo timeout 30 hping3 --flood -S -p 80 192.168.207.199 ; date
+date; sudo timeout 30 hping3 -S -p 80 -i u10000 192.168.207.199 ; date
 ```
+(`-i u10000` = cách nhau 10ms/gói thay vì tối đa tốc độ — `--flood` đã xác nhận làm Zeek mất >99% gói tin trên máy này.)
 
 **5. DoS lớp ứng dụng — Slowloris (cần `slowloris`, có sẵn trên Kali):**
 ```bash
