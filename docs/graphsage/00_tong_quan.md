@@ -33,3 +33,4 @@ Hai bộ dữ liệu công khai, chuẩn hoá theo định dạng **NetFlow V2**
 3. `02_kien_truc_mo_hinh.md` — công thức toán học + siêu tham số E-GraphSAGE
 4. `03_ket_qua.md` — bảng kết quả đầy đủ TN1 + TN2 (số liệu chính thức, dùng viết Chương 4)
 5. `04_cong_viec_con_lai.md` — việc chưa làm (GNNExplainer, kiểm định thống kê, mô phỏng real-time)
+6. `05_demo_realtime_setup.md` — tài liệu tự chứa, đầy đủ kỹ thuật để dựng demo real-time (dùng để giao cho agent/người khác thực hiện trên server, không cần đọc thêm file nào khác)

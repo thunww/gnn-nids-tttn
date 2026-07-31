@@ -10,21 +10,21 @@ So sánh có ý nghĩa thống kê giữa E-GraphSAGE và baseline (Random Fores
 
 ## Thí nghiệm 6 — Mô phỏng real-time (VMware + Zeek + Suricata)
 
-**Đã xác nhận sẽ làm, chưa bắt đầu.** Mục đích: trình diễn phát hiện tấn công trực quan theo thời gian thực trước hội đồng, đồng thời so sánh trực tiếp với hệ thống rule-based (Suricata).
+**Đã xác nhận sẽ làm, chưa bắt đầu. Đã xác nhận demo kiểu TRỰC TIẾP** (model phản ứng gần thời gian thực ngay khi tấn công diễn ra trước hội đồng, không phải chạy trước rồi phân tích sau) — quyết định 2026-07-27, xem `docs/decisions.md`. Mục đích: trình diễn phát hiện tấn công trực quan theo thời gian thực, đồng thời so sánh trực tiếp với hệ thống rule-based (Suricata).
 
-### Checklist các bước
+### Checklist các bước (7 phase, A→G)
 
-| # | Việc | Ai làm |
+| Phase | Việc | Ai làm |
 |---|---|---|
-| 1 | Dựng VMware: máy tấn công + máy nạn nhân + máy giám sát, mạng **host-only, cô lập hoàn toàn khỏi Internet** (bắt buộc — kể cả kịch bản DoS cũng chỉ chạy trong mạng ảo cục bộ) | Người thực hiện |
-| 2 | Cài Zeek trên máy giám sát, bật Promiscuous Mode để bắt toàn bộ traffic | Người thực hiện |
-| 3 | Chạy lần lượt 5 kịch bản tấn công đã hoạch định, ghi lại chính xác thời điểm/loại tấn công (để gán nhãn đúng sau này) | Người thực hiện |
-| 4 | Viết code chuyển log Zeek → đúng định dạng đặc trưng NetFlow V2 (43-49 cột, khớp schema đã dùng để train) — **bước kỹ thuật khó nhất**, log Zeek không giống định dạng NF-v2 (khác tên cột, khác cách tính 1 số chỉ số), sai bước này model sẽ dự đoán vô nghĩa | Cần viết code hỗ trợ |
-| 5 | Viết script nạp dữ liệu đã chuyển đổi qua model đã train (E-GraphSAGE + baseline) để phân loại | Cần viết code hỗ trợ (tái sử dụng khung `evaluate_test.py`/`evaluate_cross_dataset.py`) |
-| 6 | Cài Suricata + ET Open Rules trên cùng traffic | Người thực hiện |
-| 7 | Viết script so sánh kết quả model vs Suricata (True Positive/False Positive/False Negative từng bên) trên traffic đã gán nhãn thủ công ở bước 3 | Cần viết code hỗ trợ |
+| A | Dựng VMware: máy tấn công + máy nạn nhân + máy giám sát, mạng **host-only, cô lập hoàn toàn khỏi Internet** (bắt buộc — kể cả kịch bản DoS cũng chỉ chạy trong mạng ảo cục bộ), bật Promiscuous Mode cho máy giám sát, cài Zeek + Suricata + ET Open Rules | Người thực hiện |
+| B | Chốt rõ nội dung cụ thể của 5 kịch bản tấn công (chưa thấy liệt kê chi tiết trong tài liệu hiện có), chuẩn bị cách ghi lại chính xác mốc thời gian từng kịch bản | Người thực hiện |
+| C | Chạy Zeek + Suricata song song, thực hiện lần lượt 5 kịch bản, ghi lại chính xác thời điểm/loại tấn công (để gán nhãn đúng sau này) | Người thực hiện |
+| D | Viết code chuyển log Zeek → đúng định dạng đặc trưng NetFlow V2 (43 cột, khớp schema đã dùng để train) — **bước kỹ thuật khó nhất**, log Zeek không giống định dạng NF-v2 (khác tên cột, khác cách tính 1 số chỉ số), sai bước này model sẽ dự đoán vô nghĩa | Cần viết code hỗ trợ |
+| E | Viết script nạp dữ liệu đã chuyển đổi qua model đã train (E-GraphSAGE + baseline) để phân loại (offline trước, kiểm chứng đúng trước khi làm live) + script so sánh với Suricata (TP/FP/FN mỗi bên) | Cần viết code hỗ trợ (tái sử dụng khung `evaluate_test.py`/`evaluate_cross_dataset.py`) |
+| F | **(Mới — do đã xác nhận demo trực tiếp)** Dựng API (`fastapi`/`uvicorn` đã có sẵn trong `requirements.txt`, ghi chú "giai đoạn 5" nhưng **chưa có code nào**) nhận traffic gần thời gian thực từ Zeek, chuyển đổi đặc trưng, gọi model, hiển thị kết quả ngay khi có tấn công — dùng để trình chiếu trực tiếp trước hội đồng | Cần viết code hỗ trợ |
+| G | Tổng hợp kết quả vào `docs/graphsage/` | — |
 
-**Rủi ro kỹ thuật cần lưu ý:** cấu hình VMware/Promiscuous Mode, độ chính xác gán nhãn thủ công.
+**Rủi ro kỹ thuật cần lưu ý:** cấu hình VMware/Promiscuous Mode, độ chính xác gán nhãn thủ công, độ trễ xử lý real-time (Phase F).
 
 ---
 

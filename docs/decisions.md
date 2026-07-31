@@ -208,3 +208,19 @@ File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều
 7. ⬜ Viết script so sánh kết quả model vs Suricata (TP/FP/FN từng bên) trên cùng traffic đã gán nhãn thủ công ở bước 3. *(Cần code hỗ trợ.)*
 
 **Rủi ro kỹ thuật đã ghi nhận trước trong kế hoạch gốc:** cấu hình VMware/Promiscuous Mode, độ chính xác gán nhãn thủ công (mục 4.3, bảng khung quyết định).
+
+## 2026-07-27 — Xác nhận demo real-time kiểu TRỰC TIẾP (không phải chạy trước phân tích sau) — thêm Phase F (server/API)
+
+**Quyết định:** sau khi hỏi rõ, người thực hiện đề tài xác nhận muốn **demo trực tiếp trước hội đồng** — model phản ứng gần thời gian thực ngay khi tấn công diễn ra (không phải chạy tấn công trước rồi phân tích/trình bày kết quả sau). Đánh đổi: tốn thêm công sức đáng kể so với phương án đơn giản (chạy trước, phân tích sau) — cần thêm hẳn 1 phase mới.
+
+**Kế hoạch đầy đủ (7 phase, A→G), cập nhật từ checklist cũ ở mục trên:**
+
+- **Phase A — Hạ tầng:** dựng 3 máy ảo VMware (tấn công/nạn nhân/giám sát), mạng host-only cô lập, bật Promiscuous Mode cho máy giám sát, cài Zeek + Suricata + ET Open Rules, chuẩn bị dịch vụ trên máy nạn nhân. *(Người dùng tự làm.)*
+- **Phase B — Kịch bản:** chốt rõ nội dung cụ thể của 5 kịch bản tấn công đã hoạch định trong `docs/00_research_plan.md` (chưa thấy liệt kê chi tiết ở đâu trong tài liệu hiện có — cần làm rõ trước khi chạy), chuẩn bị cách ghi lại chính xác mốc thời gian từng kịch bản.
+- **Phase C — Thu thập:** chạy Zeek + Suricata song song, thực hiện lần lượt 5 kịch bản xen kẽ traffic bình thường.
+- **Phase D — Chuyển đổi dữ liệu (khó nhất):** viết script log Zeek → đúng 43 cột đặc trưng NetFlow V2 khớp schema đã train; gán nhãn thủ công theo mốc thời gian.
+- **Phase E — Suy luận + đánh giá (offline, kiểm chứng trước khi làm live):** script nạp model đã train chạy trên dữ liệu đã chuyển đổi (tái sử dụng khung `evaluate_test.py`), script so sánh với Suricata (TP/FP/FN).
+- **Phase F — Server/API cho demo trực tiếp (MỚI, do vừa xác nhận cần demo live):** dựng API (`fastapi`/`uvicorn` đã có sẵn trong `requirements.txt`, ghi chú "giai đoạn 5" nhưng **chưa có code nào** — cần viết từ đầu) nhận traffic gần thời gian thực (Zeek ghi log liên tục → script đọc log mới xuất hiện kiểu `tail -f` → chuyển đổi đặc trưng → gọi model → trả kết quả), hiển thị kết quả (console hoặc dashboard đơn giản) ngay khi có tấn công — dùng để trình chiếu trực tiếp trước hội đồng.
+- **Phase G — Báo cáo:** tổng hợp kết quả vào `docs/graphsage/`.
+
+**Bước tiếp theo cụ thể:** bắt đầu từ Phase A (hạ tầng, người dùng tự làm) + làm rõ Phase B (nội dung 5 kịch bản tấn công) trước khi viết bất kỳ code nào ở Phase D-F.
