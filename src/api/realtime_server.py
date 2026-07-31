@@ -179,133 +179,247 @@ _INDEX_HTML = f"""<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>GraphSAGE NIDS - Demo real-time</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GraphSAGE NIDS &mdash; Real-time Monitor</title>
 <style>
+  :root {{
+    color-scheme: dark;
+    --page:       #0d0d0d;
+    --surface:    #1a1a19;
+    --surface-2:  #212120;
+    --ink:        #ffffff;
+    --ink-2:      #c3c2b7;
+    --muted:      #898781;
+    --border:     rgba(255,255,255,0.10);
+    --blue:       #3987e5;   /* monitor */
+    --blue-100:   #cde2fb;
+    --yellow:     #c98500;   /* victim */
+    --red:        #e66767;   /* attacker identity */
+    --good:       #0ca30c;   /* benign status */
+    --critical:   #d03b3b;   /* attack status */
+  }}
   * {{ box-sizing: border-box; }}
-  body {{ background:#0b0f14; color:#e6edf3; font-family: system-ui, sans-serif; margin:0; padding:24px; }}
-  h1 {{ font-size:22px; margin:0 0 4px; }}
-  h3 {{ margin-bottom:8px; }}
-  .sub {{ color:#8b949e; margin-bottom:16px; }}
-  .legend {{ display:flex; gap:16px; background:#161b22; border-radius:8px; padding:12px 16px; margin-bottom:20px; flex-wrap:wrap; font-size:14px; }}
-  .legend span.tag {{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }}
-  .tag.attacker {{ background:#f85149; }}
-  .tag.victim {{ background:#d29922; }}
-  .tag.monitor {{ background:#2f81f7; }}
-  .progress-wrap {{ background:#161b22; border-radius:8px; padding:16px; margin-bottom:20px; }}
-  .bar-bg {{ background:#21262d; border-radius:6px; height:14px; overflow:hidden; margin-top:8px; }}
-  .bar-fg {{ background:#2f81f7; height:100%; width:0%; transition:width 0.3s; }}
-  .last-flow {{ color:#8b949e; font-size:13px; margin-top:6px; }}
-  .stats {{ display:flex; gap:24px; margin-bottom:24px; flex-wrap:wrap; }}
-  .stat {{ background:#161b22; border-radius:8px; padding:16px 24px; text-align:center; flex:1; min-width:140px; }}
-  .stat .num {{ font-size:32px; font-weight:700; }}
-  .stat.attack .num {{ color:#f85149; }}
-  .stat.benign .num {{ color:#3fb950; }}
-  .panels {{ display:flex; gap:24px; flex-wrap:wrap; }}
-  .panel {{ flex:1; min-width:420px; }}
+  html, body {{ overflow-x: hidden; }}
+  body {{
+    background: radial-gradient(circle at top left, #14181c 0%, var(--page) 55%);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 28px clamp(16px, 4vw, 40px) 48px;
+  }}
+  header {{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:22px; }}
+  h1 {{ font-size:21px; font-weight:700; margin:0; letter-spacing:-0.01em; }}
+  h1 .accent {{ color: var(--blue); }}
+  .sub {{ color: var(--muted); font-size:13px; margin-top:4px; }}
+  .live {{ display:flex; align-items:center; gap:8px; font-size:13px; color: var(--ink-2); background:var(--surface); border:1px solid var(--border); padding:6px 14px; border-radius:999px; }}
+  .live .dot {{ width:8px; height:8px; border-radius:50%; background:var(--good); box-shadow:0 0 0 0 rgba(12,163,12,0.6); animation:pulse 2s infinite; }}
+  .reset-btn {{
+    font: inherit; font-size:13px; color:var(--ink-2); background:var(--surface);
+    border:1px solid var(--border); padding:6px 14px; border-radius:999px; cursor:pointer;
+  }}
+  .reset-btn:hover {{ color:var(--ink); border-color:rgba(255,255,255,0.22); }}
+  @keyframes pulse {{
+    0%   {{ box-shadow:0 0 0 0 rgba(12,163,12,0.55); }}
+    70%  {{ box-shadow:0 0 0 7px rgba(12,163,12,0); }}
+    100% {{ box-shadow:0 0 0 0 rgba(12,163,12,0); }}
+  }}
+
+  .card {{ background:var(--surface); border:1px solid var(--border); border-radius:12px; }}
+
+  .legend {{ display:flex; gap:22px; padding:14px 18px; margin-bottom:18px; flex-wrap:wrap; font-size:13px; align-items:center; }}
+  .legend .item {{ display:flex; align-items:center; gap:8px; }}
+  .legend .role {{ width:9px; height:9px; border-radius:50%; flex:none; }}
+  .legend .role.attacker {{ background:var(--red); }}
+  .legend .role.victim {{ background:var(--yellow); }}
+  .legend .role.monitor {{ background:var(--blue); }}
+  .legend .ip {{ font-variant-numeric:tabular-nums; color:var(--ink); font-weight:600; }}
+  .legend .note {{ color:var(--muted); margin-left:auto; }}
+
+  .progress-card {{ padding:16px 18px; margin-bottom:20px; }}
+  .progress-top {{ display:flex; justify-content:space-between; align-items:baseline; font-size:13px; color:var(--ink-2); margin-bottom:9px; gap:12px; flex-wrap:wrap; }}
+  .progress-top b {{ color:var(--ink); font-variant-numeric:tabular-nums; }}
+  .bar-track {{ background:var(--surface-2); border-radius:999px; height:8px; overflow:hidden; }}
+  .bar-fill {{ background:linear-gradient(90deg, var(--blue-100), var(--blue)); height:100%; width:0%; transition:width 0.4s ease; border-radius:999px; }}
+  .last-flow {{ color:var(--muted); font-size:12.5px; margin-top:10px; font-variant-numeric:tabular-nums; }}
+  .last-flow b {{ color:var(--ink-2); font-weight:600; }}
+
+  .stats {{ display:grid; grid-template-columns:repeat(3, minmax(160px, 1fr)); gap:16px; margin-bottom:24px; }}
+  .stat {{ padding:18px 20px; }}
+  .stat-label {{ font-size:12.5px; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:8px; }}
+  .stat-label .swatch {{ width:8px; height:8px; border-radius:2px; }}
+  .stat .num {{ font-size:34px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1; }}
+  .stat.windows .swatch {{ background:var(--blue); }}
+  .stat.attack .swatch {{ background:var(--critical); }}
+  .stat.attack .num {{ color:var(--critical); }}
+  .stat.benign .swatch {{ background:var(--good); }}
+  .stat.benign .num {{ color:var(--good); }}
+
+  .panels {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:20px; }}
+  .panel {{ padding:16px 4px 4px; }}
+  .panel-head {{ display:flex; justify-content:space-between; align-items:center; padding:0 18px 12px; }}
+  .panel-head h3 {{ margin:0; font-size:14px; font-weight:600; }}
+  .panel-head .count {{ font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }}
+  .table-scroll {{ overflow-x:auto; max-height:420px; overflow-y:auto; }}
   table {{ width:100%; border-collapse:collapse; }}
-  th, td {{ text-align:left; padding:8px 10px; border-bottom:1px solid #21262d; font-size:13px; white-space:nowrap; }}
-  th {{ color:#8b949e; font-weight:600; }}
-  tr.new-row {{ animation: flash 1.2s ease-out; }}
-  tr.row-attack td {{ color:#f85149; }}
-  tr.row-benign td {{ color:#7d8590; }}
-  .src-attacker {{ color:#f85149 !important; font-weight:700; }}
-  @keyframes flash {{ from {{ background:#f8514933; }} to {{ background:transparent; }} }}
+  th, td {{ text-align:left; padding:9px 18px; font-size:13px; white-space:nowrap; font-variant-numeric:tabular-nums; }}
+  th {{ color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; position:sticky; top:0; background:var(--surface); }}
+  tbody tr {{ border-top:1px solid var(--border); }}
+  tbody tr.new-row {{ animation: flash 1.4s ease-out; }}
+  @keyframes flash {{ from {{ background:rgba(208,59,59,0.18); }} to {{ background:transparent; }} }}
+  .src {{ color:var(--ink-2); }}
+  .src.is-attacker {{ color:var(--red); font-weight:700; }}
+  .dst {{ color:var(--muted); }}
+
+  .badge {{ display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:600; }}
+  .badge .dot {{ width:6px; height:6px; border-radius:50%; }}
+  .badge.attack {{ color:var(--critical); background:rgba(208,59,59,0.14); }}
+  .badge.attack .dot {{ background:var(--critical); }}
+  .badge.benign {{ color:var(--good); background:rgba(12,163,12,0.12); }}
+  .badge.benign .dot {{ background:var(--good); }}
+
+  .empty {{ color:var(--muted); font-size:13px; padding:24px 18px; text-align:center; }}
 </style>
 </head>
 <body>
-  <h1>GraphSAGE NIDS &mdash; Demo phat hien tan cong real-time</h1>
-  <div class="sub">Nguon: Zeek conn.log &rarr; NetFlow V2 &rarr; E-GraphSAGE (nf-cse-cic-ids2018-v2)</div>
+  <header>
+    <div>
+      <h1>GraphSAGE <span class="accent">NIDS</span> &mdash; Giam sat tan cong real-time</h1>
+      <div class="sub">Zeek conn.log &rarr; NetFlow V2 &rarr; E-GraphSAGE ({DATASET})</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="live"><span class="dot"></span><span id="live-text">Dang ket noi...</span></div>
+      <button id="reset-btn" class="reset-btn">&#8635; Reset hien thi</button>
+    </div>
+  </header>
 
-  <div class="legend">
-    <div><span class="tag attacker"></span>Attacker: <b>{ATTACKER_IP}</b></div>
-    <div><span class="tag victim"></span>Victim: <b>{VICTIM_IP}</b></div>
-    <div><span class="tag monitor"></span>Monitor (may nay): <b>{MONITOR_IP}</b></div>
-    <div style="color:#8b949e">Traffic toi cong :8000 (chinh trang nay) da duoc loai khoi phan tich</div>
+  <div class="card legend">
+    <div class="item"><span class="role attacker"></span>Attacker <span class="ip">{ATTACKER_IP}</span></div>
+    <div class="item"><span class="role victim"></span>Victim <span class="ip">{VICTIM_IP}</span></div>
+    <div class="item"><span class="role monitor"></span>Monitor <span class="ip">{MONITOR_IP}</span></div>
+    <div class="note">Traffic toi cong :{DASHBOARD_PORT} (trang nay) da duoc loai khoi phan tich</div>
   </div>
 
-  <div class="progress-wrap">
-    <div id="progress-text">Dang cho ket noi...</div>
-    <div class="bar-bg"><div class="bar-fg" id="bar"></div></div>
-    <div class="last-flow" id="last-flow"></div>
+  <div class="card progress-card">
+    <div class="progress-top">
+      <span id="progress-text">Dang cho du lieu...</span>
+      <span><b id="flows-remaining">&mdash;</b> flow nua toi cua so tiep theo</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="bar"></div></div>
+    <div class="last-flow" id="last-flow">&nbsp;</div>
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="num" id="total-windows">0</div>So cua so da xu ly</div>
-    <div class="stat attack"><div class="num" id="total-attack">0</div>Flow bi gan nhan Attack</div>
-    <div class="stat benign"><div class="num" id="total-benign">0</div>Flow Benign</div>
+    <div class="card stat windows">
+      <div class="stat-label"><span class="swatch"></span>Cua so da xu ly</div>
+      <div class="num" id="total-windows">0</div>
+    </div>
+    <div class="card stat attack">
+      <div class="stat-label"><span class="swatch"></span>Flow gan nhan Attack</div>
+      <div class="num" id="total-attack">0</div>
+    </div>
+    <div class="card stat benign">
+      <div class="stat-label"><span class="swatch"></span>Flow Benign</div>
+      <div class="num" id="total-benign">0</div>
+    </div>
   </div>
 
   <div class="panels">
-    <div class="panel">
-      <h3>Traffic gan nhat (mau moi cua so)</h3>
-      <table>
-        <thead><tr><th>Gio</th><th>Nguon</th><th>Dich</th><th>Ket qua</th></tr></thead>
-        <tbody id="recent-body"></tbody>
-      </table>
+    <div class="card panel">
+      <div class="panel-head"><h3>Traffic gan nhat</h3><span class="count">mau cua so vua xu ly</span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Gio</th><th>Nguon</th><th>Dich</th><th>Ket qua</th></tr></thead>
+          <tbody id="recent-body"><tr><td class="empty" colspan="4">Dang cho cua so dau tien&hellip;</td></tr></tbody>
+        </table>
+      </div>
     </div>
-    <div class="panel">
-      <h3>Cac flow gan nhan Attack</h3>
-      <table>
-        <thead><tr><th>Gio</th><th>Nguon</th><th>Dich</th><th>Xac suat</th></tr></thead>
-        <tbody id="attack-body"></tbody>
-      </table>
+    <div class="card panel">
+      <div class="panel-head"><h3>Canh bao Attack</h3><span class="count" id="attack-count">0 canh bao</span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Gio</th><th>Nguon</th><th>Dich</th><th>Xac suat</th></tr></thead>
+          <tbody id="attack-body"><tr><td class="empty" colspan="4">Chua co canh bao nao</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
 <script>
   const ATTACKER_IP = "{ATTACKER_IP}";
-  let totalWindows = 0, totalAttack = 0, totalBenign = 0;
+  let totalWindows = 0, totalAttack = 0, totalBenign = 0, attackAlerts = 0;
   const ws = new WebSocket(`ws://${{location.host}}/ws`);
 
   function fmtTime(ts) {{
-    return new Date(parseFloat(ts) * 1000).toLocaleTimeString('vi-VN');
+    return new Date(parseFloat(ts) * 1000).toLocaleTimeString('vi-VN', {{ hour12:false }});
   }}
   function srcCell(ip, port) {{
-    const cls = ip === ATTACKER_IP ? ' class="src-attacker"' : '';
+    const cls = ip === ATTACKER_IP ? ' class="src is-attacker"' : ' class="src"';
     return `<td${{cls}}>${{ip}}:${{port}}</td>`;
   }}
+  function badge(isAttack) {{
+    return isAttack
+      ? '<span class="badge attack"><span class="dot"></span>Attack</span>'
+      : '<span class="badge benign"><span class="dot"></span>Benign</span>';
+  }}
+
+  ws.onopen = () => {{ document.getElementById("live-text").textContent = "Live"; }};
+
+  document.getElementById("reset-btn").onclick = () => {{
+    totalWindows = 0; totalAttack = 0; totalBenign = 0; attackAlerts = 0;
+    document.getElementById("total-windows").textContent = "0";
+    document.getElementById("total-attack").textContent = "0";
+    document.getElementById("total-benign").textContent = "0";
+    document.getElementById("attack-count").textContent = "0 canh bao";
+    document.getElementById("attack-body").innerHTML = '<tr><td class="empty" colspan="4">Chua co canh bao nao</td></tr>';
+    document.getElementById("recent-body").innerHTML = '<tr><td class="empty" colspan="4">Dang cho cua so tiep theo&hellip;</td></tr>';
+  }};
 
   ws.onmessage = (event) => {{
     const msg = JSON.parse(event.data);
     if (msg.type === "progress") {{
       const pct = 100 * (msg.window_size - msg.flows_until_next_window) / msg.window_size;
       document.getElementById("bar").style.width = Math.max(0, Math.min(100, pct)) + "%";
-      document.getElementById("progress-text").textContent =
-        `Tong flow da nhan: ${{msg.total_flows}} -- can them ${{msg.flows_until_next_window}} flow de co cua so tiep theo (${{msg.window_size}} flow/cua so)`;
+      document.getElementById("progress-text").textContent = `Tong flow da nhan: ${{msg.total_flows.toLocaleString('vi-VN')}}`;
+      document.getElementById("flows-remaining").textContent = msg.flows_until_next_window.toLocaleString('vi-VN');
       if (msg.last_flow) {{
-        document.getElementById("last-flow").textContent =
-          `Flow moi nhat: ${{msg.last_flow.src}} -> ${{msg.last_flow.dst}} (proto ${{msg.last_flow.proto}})`;
+        document.getElementById("last-flow").innerHTML =
+          `Flow moi nhat: <b>${{msg.last_flow.src}}</b> &rarr; <b>${{msg.last_flow.dst}}</b> &middot; proto ${{msg.last_flow.proto}}`;
       }}
     }} else if (msg.type === "window_result") {{
       totalWindows += 1;
       totalAttack += msg.num_attack;
       totalBenign += (msg.num_flows - msg.num_attack);
-      document.getElementById("total-windows").textContent = totalWindows;
-      document.getElementById("total-attack").textContent = totalAttack;
-      document.getElementById("total-benign").textContent = totalBenign;
+      attackAlerts += msg.attacks.length;
+      document.getElementById("total-windows").textContent = totalWindows.toLocaleString('vi-VN');
+      document.getElementById("total-attack").textContent = totalAttack.toLocaleString('vi-VN');
+      document.getElementById("total-benign").textContent = totalBenign.toLocaleString('vi-VN');
+      document.getElementById("attack-count").textContent = `${{attackAlerts.toLocaleString('vi-VN')}} canh bao`;
 
       const attackBody = document.getElementById("attack-body");
+      if (msg.attacks.length && attackBody.querySelector(".empty")) attackBody.innerHTML = "";
       for (const a of msg.attacks) {{
         const tr = document.createElement("tr");
         tr.className = "new-row";
         tr.innerHTML = `<td>${{fmtTime(a.ts)}}</td>${{srcCell(a.IPV4_SRC_ADDR, a.L4_SRC_PORT)}}` +
-          `<td>${{a.IPV4_DST_ADDR}}:${{a.L4_DST_PORT}}</td><td>${{(a.pred_proba*100).toFixed(1)}}%</td>`;
+          `<td class="dst">${{a.IPV4_DST_ADDR}}:${{a.L4_DST_PORT}}</td><td>${{(a.pred_proba*100).toFixed(1)}}%</td>`;
         attackBody.prepend(tr);
       }}
-      while (attackBody.rows.length > 30) attackBody.deleteRow(-1);
+      while (attackBody.rows.length > 40) attackBody.deleteRow(-1);
 
       const recentBody = document.getElementById("recent-body");
       recentBody.innerHTML = "";
       for (const r of msg.recent.slice().reverse()) {{
         const tr = document.createElement("tr");
-        tr.className = r.pred_label === 1 ? "row-attack" : "row-benign";
         tr.innerHTML = `<td>${{fmtTime(r.ts)}}</td>${{srcCell(r.IPV4_SRC_ADDR, r.L4_SRC_PORT)}}` +
-          `<td>${{r.IPV4_DST_ADDR}}:${{r.L4_DST_PORT}}</td><td>${{r.pred_label === 1 ? "ATTACK" : "benign"}}</td>`;
+          `<td class="dst">${{r.IPV4_DST_ADDR}}:${{r.L4_DST_PORT}}</td><td>${{badge(r.pred_label === 1)}}</td>`;
         recentBody.appendChild(tr);
       }}
     }}
   }};
-  ws.onclose = () => {{ document.getElementById("progress-text").textContent = "Mat ket noi toi server."; }};
+  ws.onclose = () => {{
+    document.getElementById("live-text").textContent = "Mat ket noi";
+    document.querySelector(".live .dot").style.background = "var(--critical)";
+  }};
 </script>
 </body>
 </html>"""
