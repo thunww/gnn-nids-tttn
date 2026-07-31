@@ -4,6 +4,8 @@ Nhật ký các quyết định ảnh hưởng nhiều giai đoạn/nhiều file
 
 ## 📌 Tóm tắt trạng thái hiện tại (cập nhật 2026-07-27) — đọc mục này trước khi đọc phần lịch sử bên dưới
 
+**🔗 Muốn viết báo cáo/lấy số liệu chính thức? Dùng thư mục `docs/graphsage/` — tài liệu đã lọc sạch, không lẫn thông tin cũ về GCN/GAT/đa lớp.** File `decisions.md` này và `docs/phases/*.md` chỉ là nhật ký làm việc (giữ lại lịch sử để truy vết), không phải nguồn số liệu để viết báo cáo.
+
 File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều quyết định bên dưới đã bị **đảo ngược sau đó**. Để tránh nhầm lẫn khi đọc lướt, trạng thái **đang dùng thật sự** hiện tại là:
 
 - **Bài toán: NHỊ PHÂN** (`Label`: 0=Benign/1=Attack) — KHÔNG phải đa lớp. (Đổi ngày 2026-07-26, đảo ngược quyết định đa lớp ngày 2026-07-18 bên dưới.)
@@ -181,7 +183,7 @@ File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều
 **Đã điều tra kỹ trước khi kết luận (không vội cho là lỗi hay vội chấp nhận):**
 1. Kiểm tra thứ tự cột đặc trưng giữa `full_chronological.parquet` và `train.parquet` (khớp) và giữa 2 bộ dữ liệu (khớp, 46 cột cùng tên cùng thứ tự) — loại trừ khả năng lỗi ánh xạ cột.
 2. Kiểm tra quy ước nhãn `Label` (0=Benign/1=Attack) giữa 2 bộ — khớp nhau, loại trừ khả năng đảo nhãn.
-3. Đo trực tiếp: 69.2% dữ liệu UNSW-NB15 sau khi quy đổi đúng cách sang thang đo CSE-CIC rơi vào vùng cực đoan (|z|>5, ngoài phạm vi model từng học) — xác nhận đây là hiện tượng trôi dạt phân phối (distribution drift) thật, không phải lỗi code.
+3. Đo trực tiếp: **69,2% số HÀNG** (mẫu) dữ liệu UNSW-NB15 sau khi quy đổi đúng cách sang thang đo CSE-CIC có **ít nhất 1** trong 39 cột đặc trưng rơi vào vùng cực đoan (|z|>5, ngoài phạm vi model từng học) — xác nhận đây là hiện tượng trôi dạt phân phối (distribution drift) thật, không phải lỗi code. *(Đo bổ sung 2026-07-27, khi làm hình minh hoạ: nếu tính theo từng GIÁ TRỊ ĐƠN LẺ, không gộp theo hàng — tức % trên tổng số ô dữ liệu (hàng × 39 cột) — tỷ lệ là **6,2%**. Cả 2 con số đều đúng, chỉ là 2 cách đo khác nhau: 69,2% trả lời "bao nhiêu % mẫu bị ảnh hưởng bởi ít nhất 1 đặc trưng lệch", 6,2% trả lời "trung bình bao nhiêu % thông tin trong mỗi mẫu bị lệch" — dùng 69,2% khi lập luận về rủi ro cấp độ mẫu, dùng 6,2% khi mô tả phân phối z-score tổng thể (xem `report_figures/zscore_distribution.png`).)*
 4. Đối chiếu y văn: tìm được nghiên cứu độc lập đo lường đúng hiện tượng này (36/45 đặc trưng NIDS vượt ngưỡng trôi dạt nghiêm trọng PSI≥0.25 giữa các bộ dữ liệu khác) — xác nhận không phải hiện tượng lạ riêng của đề tài.
 
 **Cân nhắc hướng "sửa" (self-supervised learning, kiểu Anomal-E) — quyết định KHÔNG làm ngay:**
