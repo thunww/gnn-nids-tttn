@@ -8,4 +8,4 @@ Mã nguồn dự án, chia theo giai đoạn trong `docs/00_research_plan.md`:
 - **training/** — training loop, Optuna, MLflow tracking (trỏ Google Drive), checkpoint mỗi epoch. (Giai đoạn 3)
 - **evaluation/** — metrics (F1-macro là chỉ số chính, Precision/Recall, AUC-ROC, MCC), Thí nghiệm 1 (within-dataset), Thí nghiệm 2 (cross-dataset), kiểm định McNemar. (Giai đoạn 4)
 - **explainability/** — GNNExplainer cho mô hình tốt nhất. (Giai đoạn 4)
-- **api/** — dịch vụ dự đoán + giải thích phục vụ demo, chỉ serving trên cloud, không tấn công trên cloud. (Giai đoạn 5)
+- **api/** — dịch vụ dự đoán phục vụ demo real-time (Giai đoạn 5, xem `docs/graphsage/05_demo_realtime_setup.md`): `zeek_convert.py` (Zeek conn.log → 39 cột NetFlow V2), `window_buffer.py` (gom flow thành cửa sổ trượt), `infer.py` (nạp model 1 lần, suy luận theo cửa sổ), `realtime_server.py` (FastAPI + WebSocket, giao diện demo).
