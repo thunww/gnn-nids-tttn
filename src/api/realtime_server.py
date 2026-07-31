@@ -15,8 +15,9 @@ import asyncio
 import json
 import threading
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import AsyncIterator, Iterator
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -30,8 +31,6 @@ PROCESSED_DIR = Path("data/processed")
 DATASET = "nf-cse-cic-ids2018-v2"
 POLL_INTERVAL = 0.5  # giay -- tan suat kiem tra dong moi khi conn.log tam thoi khong co gi moi
 WINDOW_SIZE = WINDOW_SIZE_BY_DATASET[DATASET]
-
-app = FastAPI(title="GraphSAGE NIDS - Demo real-time")
 
 _clients: set[WebSocket] = set()
 _loop: asyncio.AbstractEventLoop | None = None
@@ -122,11 +121,15 @@ def _worker() -> None:
         )
 
 
-@app.on_event("startup")
-async def on_startup() -> None:
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     global _loop
     _loop = asyncio.get_event_loop()
     threading.Thread(target=_worker, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="GraphSAGE NIDS - Demo real-time", lifespan=lifespan)
 
 
 @app.websocket("/ws")
