@@ -224,3 +224,30 @@ File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều
 - **Phase G — Báo cáo:** tổng hợp kết quả vào `docs/graphsage/`.
 
 **Bước tiếp theo cụ thể:** bắt đầu từ Phase A (hạ tầng, người dùng tự làm) + làm rõ Phase B (nội dung 5 kịch bản tấn công) trước khi viết bất kỳ code nào ở Phase D-F.
+
+## 2026-07-31 — ⚠️ LỖI RÒ RỈ DỮ LIỆU nghiêm trọng trong Graph Builder — ảnh hưởng TOÀN BỘ kết quả TN1 đã có, đã sửa
+
+**Bối cảnh phát hiện:** người thực hiện đề tài nghi ngờ chỉ số GraphSAGE cao bất thường (F1-macro 0.988, cao hơn cả baseline) so với y văn (bài "Few Edges Are Enough", arXiv:2501.16964, cùng bộ CSE-CIC-IDS2018, cùng bài toán nhị phân, chỉ đạt F1=96,02%) — yêu cầu kiểm tra kỹ thay vì chỉ tra cứu thêm tài liệu.
+
+**Nguyên nhân xác nhận (đo lường định lượng, không phải suy đoán):**
+- `src/graph/windowing.py`: cửa sổ trượt chồng lấp **50%** (`WINDOW_OVERLAP=0.5`) — cửa sổ `i` và `i+1` dùng chung ~50% số flow.
+- `src/graph/run_graph_builder.py` (bản cũ): chia danh sách đồ thị (cửa sổ) vào train/val/test bằng `train_test_split(graphs, ..., random_state=42)` — **xáo trộn ngẫu nhiên** trước khi chia, không quan tâm cửa sổ nào chồng lấp cửa sổ nào.
+- **Đo trực tiếp (mô phỏng đúng cùng `random_state=42`, cùng số lượng cửa sổ thật của CSE-CIC-IDS2018):** trong 18.891 cặp cửa sổ liền kề (mỗi cặp chồng lấp 50%), có **8.725 cặp (46,2%) bị tách vào 2 tập khác nhau** (vd cửa sổ `i` vào train, cửa sổ `i+1` vào test) — nghĩa là cùng 1 lượng lớn flow xuất hiện ở CẢ train lẫn test, gây rò rỉ dữ liệu (data leakage) thật.
+
+**Vì sao chỉ ảnh hưởng TN1 (GraphSAGE), không ảnh hưởng baseline hay TN2:**
+- **Baseline (RF/XGBoost):** chia theo **dòng** (`stratified_split`, không qua bước cửa sổ/đồ thị) — không có khái niệm "chồng lấp cửa sổ", không bị lỗi này. Số liệu baseline vẫn đáng tin.
+- **TN2 (cross-dataset):** train 1 bộ, test bộ KHÁC — 2 bộ dữ liệu không hề chồng lấp nhau, lỗi này không áp dụng được. **Kết quả TN2 (cả 3 model sụp đổ khi đổi môi trường) vẫn đúng, không cần làm lại.**
+- **TN1 (GraphSAGE, within-dataset):** bị ảnh hưởng trực tiếp — **toàn bộ số liệu GraphSAGE trong TN1 đã có (F1-macro 0.988/0.978) không đáng tin cậy, cần làm lại từ đầu.**
+
+**Đối chiếu y văn để ước lượng mức ảnh hưởng thực tế:** bài "Few Edges Are Enough" (không có lỗi rò rỉ) báo cáo E-GraphSAGE nhị phân, cùng bộ CSE-CIC-IDS2018, đạt F1=96,02%. Baseline (không lỗi) của chính đề tài đạt ~98,5-99%. → **Kỳ vọng sau khi sửa: F1-macro GraphSAGE rơi vào khoảng ~93-97%** — vẫn là kết quả tốt, chỉ không còn cao vô lý như hiện tại (98,8%).
+
+**Đã sửa (`src/graph/run_graph_builder.py`):** thay xáo trộn ngẫu nhiên bằng **chia theo khối liên tục theo đúng thứ tự thời gian** đã dùng để dựng cửa sổ (giữ đúng nguyên tắc đã áp dụng ở bước ETL với `full_chronological.parquet`). Thêm "purge gap" — bỏ đúng 1 đồ thị ở mỗi ranh giới train/val và val/test — để loại bỏ hoàn toàn phần chồng lấp còn sót lại ở đúng đường ranh giới (chỉ mất 2 đồ thị/~18.892, không đáng kể). Đã test cục bộ (pytest pass, không ảnh hưởng logic chia đồ thị/tính đặc trưng khác).
+
+**Việc cần làm tiếp (toàn bộ, vì train set đã đổi hoàn toàn):**
+1. Chạy lại Graph Builder cho **cả 2 bộ dữ liệu** (nhãn/đặc trưng không đổi, chỉ đổi cách chia train/val/test).
+2. Chạy lại `shard_graphs.py`, xoá `train_graphs.pt` gốc dư thừa (như các lần trước).
+3. **Train lại GraphSAGE từ đầu** (cả 2 bộ, trên Colab) — bắt buộc, vì tập train giờ có nội dung khác hẳn (không còn tình cờ chứa 1 phần dữ liệu test).
+4. Chạy lại `evaluate_test.py` (TN1) với model mới — đây mới là số liệu chính thức thật để dùng viết báo cáo.
+5. Chạy lại `evaluate_cross_dataset.py` (TN2) với model mới (dù bản chất TN2 không lỗi, nhưng model nguồn đã đổi nên cần cập nhật số liệu cho khớp model mới).
+6. Cập nhật toàn bộ bảng số liệu trong `docs/phases/phase3_model_training.md`, `docs/graphsage/03_ket_qua.md` — **giữ nguyên số liệu cũ (không xoá, đánh dấu rõ "đã lỗi thời do lỗi rò rỉ dữ liệu")**, thêm bảng mới bên cạnh.
+7. Sinh lại các ảnh trong `report_figures/` (dùng `scripts/generate_report_figures.py`) với số liệu mới.
