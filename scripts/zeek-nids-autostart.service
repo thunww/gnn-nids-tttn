@@ -1,0 +1,13 @@
+[Unit]
+Description=Auto bat promiscuous mode + khoi dong Zeek cho demo NIDS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/zeek-nids-autostart.sh
+RemainAfterExit=yes
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target
