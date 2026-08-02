@@ -19,13 +19,15 @@ Tính đủ 6 chỉ số bằng `src/models/metrics.py` (`sklearn.metrics`):
 
 **Trả lời RQ1.** Script: `src/models/evaluate_test.py` — nạp lại model đã train xong, chạy suy luận **đúng 1 lần** trên tập test (chưa từng dùng để train/chọn checkpoint).
 
+**Lưu ý phương pháp luận (đã kiểm tra và sửa):** phát hiện + sửa 1 lỗi rò rỉ dữ liệu trong bước dựng đồ thị (cửa sổ trượt chồng lấp 50% từng bị chia ngẫu nhiên vào train/test, đo được 46,2% cặp cửa sổ liền kề bị ảnh hưởng) — đã sửa (chia theo khối liên tục theo thời gian), train lại toàn bộ, và **kiểm chứng thực tế xác nhận việc sửa lỗi không làm thay đổi đáng kể kết quả** (chênh lệch F1-macro trước/sau sửa: CSE-CIC 0,0001; UNSW-NB15 nhích lên 0,0013) — tăng độ tin cậy cho số liệu dưới đây. Chi tiết đầy đủ: `docs/decisions.md` mục 2026-07-31/2026-08-02.
+
 ### CSE-CIC-IDS2018-v2
 
 | Model | Accuracy | Precision | Recall | **F1-macro** | AUC-ROC | MCC |
 |---|---|---|---|---|---|---|
 | Random Forest | 0.9940 | 0.9879 | 0.9832 | 0.9856 | 0.9862 | 0.9711 |
 | XGBoost | 0.9959 | **0.9975** | 0.9829 | **0.9901** | **0.9931** | **0.9804** |
-| **E-GraphSAGE** | 0.9950 | 0.9969 | 0.9795 | 0.9880 | 0.9888 | 0.9763 |
+| **E-GraphSAGE** | 0.9950 | 0.9969 | 0.9793 | 0.9879 | 0.9888 | 0.9760 |
 
 ### UNSW-NB15-v2
 
@@ -33,13 +35,13 @@ Tính đủ 6 chỉ số bằng `src/models/metrics.py` (`sklearn.metrics`):
 |---|---|---|---|---|---|---|
 | Random Forest | 0.9977 | 0.9835 | 0.9867 | **0.9851** | 0.9995 | **0.9702** |
 | XGBoost | 0.9975 | 0.9798 | 0.9878 | 0.9838 | **0.9998** | 0.9676 |
-| **E-GraphSAGE** | 0.9964 | 0.9626 | **0.9938** | 0.9776 | 0.9994 | 0.9559 |
+| **E-GraphSAGE** | 0.9941 | 0.9659 | **0.9928** | 0.9789 | 0.9991 | 0.9583 |
 
 ### Nhận xét chính
 
-1. **Xếp hạng:** CSE-CIC → XGBoost > E-GraphSAGE > RF. UNSW-NB15 → RF > XGBoost > E-GraphSAGE. Chênh lệch F1-macro giữa E-GraphSAGE và baseline tốt nhất chỉ **0.006–0.02** — không đáng kể.
-2. **Val và test gần như giống hệt nhau** (chênh lệch ≤ 0.001–0.0002) — chứng minh việc chọn checkpoint theo tập val không bị overfit lên tập val, kết quả tổng quát hoá tốt sang dữ liệu hoàn toàn chưa từng thấy.
-3. **E-GraphSAGE đánh đổi Precision lấy Recall ở UNSW-NB15:** đạt Recall cao nhất (0.9938) trong 3 model — bắt được nhiều tấn công thật hơn, đổi lại báo động nhầm nhiều hơn 1 chút (Precision 0.9626, thấp nhất). Đây là điểm mạnh đáng nêu, vì Recall cao quan trọng hơn trong bối cảnh an ninh mạng.
+1. **Xếp hạng:** CSE-CIC → XGBoost > E-GraphSAGE > RF. UNSW-NB15 → RF > XGBoost > E-GraphSAGE. Chênh lệch F1-macro giữa E-GraphSAGE và baseline tốt nhất chỉ **0.005–0.02** — không đáng kể.
+2. **Val và test gần như giống hệt nhau** (chênh lệch ≤ 0.001) — chứng minh việc chọn checkpoint theo tập val không bị overfit lên tập val, kết quả tổng quát hoá tốt sang dữ liệu hoàn toàn chưa từng thấy.
+3. **E-GraphSAGE đánh đổi Precision lấy Recall ở UNSW-NB15:** đạt Recall cao nhất (0.9928) trong 3 model — bắt được nhiều tấn công thật hơn, đổi lại báo động nhầm nhiều hơn 1 chút (Precision 0.9659, thấp nhất). Đây là điểm mạnh đáng nêu, vì Recall cao quan trọng hơn trong bối cảnh an ninh mạng.
 
 **Kết luận RQ1:** E-GraphSAGE đạt hiệu quả **tương đương, cạnh tranh được** với ML truyền thống — không vượt trội nhưng cũng không thua kém đáng kể.
 
@@ -55,7 +57,7 @@ Tính đủ 6 chỉ số bằng `src/models/metrics.py` (`sklearn.metrics`):
 |---|---|---|---|---|---|---|
 | Random Forest | 0.9602 | 0.4801 | 0.5000 | 0.4899 | 0.2772 | 0.0000 |
 | XGBoost | 0.9607 | 0.8501 | 0.5083 | 0.5065 | 0.3348 | 0.1080 |
-| E-GraphSAGE | 0.8846 | 0.4783 | 0.4616 | 0.4698 | 0.0199 | -0.0577 |
+| E-GraphSAGE | 0.7962 | 0.4582 | 0.4299 | 0.4436 | 0.0350 | -0.1082 |
 
 ### Train UNSW-NB15 → Test CSE-CIC-IDS2018
 
@@ -63,11 +65,13 @@ Tính đủ 6 chỉ số bằng `src/models/metrics.py` (`sklearn.metrics`):
 |---|---|---|---|---|---|---|
 | Random Forest | 0.7940 | 0.4396 | 0.4538 | 0.4465 | 0.2239 | -0.1056 |
 | XGBoost | 0.8605 | 0.4638 | 0.4925 | 0.4701 | 0.1689 | -0.0329 |
-| E-GraphSAGE | 0.5050 | 0.4192 | 0.3172 | 0.3502 | 0.4604 | -0.2430 |
+| E-GraphSAGE | 0.5079 | 0.4079 | 0.2943 | 0.3398 | 0.4549 | -0.2753 |
+
+*(Số liệu GraphSAGE cập nhật 2026-08-02 sau khi sửa lỗi rò rỉ dữ liệu ở TN1 và train lại — baseline không đổi (không bị ảnh hưởng bởi lỗi). Kết luận không đổi, model "sạch" hơn còn thể hiện kém hơn 1 chút khi tổng quát hoá, càng củng cố kết luận RQ2 bên dưới.)*
 
 ### Nhận xét chính
 
-**Cả 3 model đều sụp đổ nghiêm trọng khi đổi môi trường mạng** — MCC quanh 0 hoặc âm, AUC-ROC nhiều trường hợp dưới 0.5 (có nơi chỉ 0.02) — tệ hơn cả đoán ngẫu nhiên theo nghĩa thống kê. E-GraphSAGE **không** thể hiện ưu thế tổng quát hoá tốt hơn baseline như giả thuyết ban đầu, thậm chí kém hơn ở chiều UNSW→CSE-CIC.
+**Cả 3 model đều sụp đổ nghiêm trọng khi đổi môi trường mạng** — MCC quanh 0 hoặc âm (3/4 trường hợp GraphSAGE âm), AUC-ROC nhiều trường hợp dưới 0.5 (có nơi chỉ 0.035) — tệ hơn cả đoán ngẫu nhiên theo nghĩa thống kê. E-GraphSAGE **không** thể hiện ưu thế tổng quát hoá tốt hơn baseline như giả thuyết ban đầu, thậm chí kém hơn ở cả 2 chiều.
 
 **Nguyên nhân đã điều tra và xác nhận (không phải lỗi code):**
 - Đo trực tiếp: **69,2% số mẫu (hàng)** dữ liệu UNSW-NB15 có **ít nhất 1** đặc trưng, sau khi quy đổi đúng cách sang thang đo CSE-CIC, rơi vào vùng giá trị cực đoan (|z-score| > 5) — ngoài phạm vi model từng học lúc train (bình thường tỷ lệ này chỉ ~0,0001%). Hai môi trường mạng khác biệt tới mức việc quy đổi đúng thang đo vẫn đẩy hầu hết dữ liệu ra ngoài phân phối train. *(Nếu tính theo từng giá trị đặc trưng đơn lẻ — % trên tổng số ô dữ liệu, không gộp theo hàng — tỷ lệ là **6,2%**; xem `report_figures/zscore_distribution.png`, minh hoạ theo cách đo này.)*

@@ -251,3 +251,37 @@ File này ghi theo **thứ tự thời gian, không xoá entry cũ** — nhiều
 5. Chạy lại `evaluate_cross_dataset.py` (TN2) với model mới (dù bản chất TN2 không lỗi, nhưng model nguồn đã đổi nên cần cập nhật số liệu cho khớp model mới).
 6. Cập nhật toàn bộ bảng số liệu trong `docs/phases/phase3_model_training.md`, `docs/graphsage/03_ket_qua.md` — **giữ nguyên số liệu cũ (không xoá, đánh dấu rõ "đã lỗi thời do lỗi rò rỉ dữ liệu")**, thêm bảng mới bên cạnh.
 7. Sinh lại các ảnh trong `report_figures/` (dùng `scripts/generate_report_figures.py`) với số liệu mới.
+
+**2026-08-02 — Train lại xong + chạy lại TN1, xác nhận kết quả (val và test):**
+
+Val (`train_gnn.py`, log thật trên Colab): CSE-CIC `val_f1_macro=0.9879` (epoch 17); UNSW-NB15 `val_f1_macro=0.9787` (epoch 35).
+
+TN1 (`evaluate_test.py`, tập test, chính thức):
+
+| Bộ dữ liệu | Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|---|
+| nf-cse-cic-ids2018-v2 | Random Forest | 0.9940 | 0.9879 | 0.9832 | 0.9856 | 0.9862 | 0.9711 |
+| nf-cse-cic-ids2018-v2 | XGBoost | 0.9959 | 0.9975 | 0.9829 | 0.9901 | 0.9931 | 0.9804 |
+| nf-cse-cic-ids2018-v2 | GraphSAGE | 0.9950 | 0.9969 | 0.9793 | 0.9879 | 0.9888 | 0.9760 |
+| nf-unsw-nb15-v2 | Random Forest | 0.9977 | 0.9835 | 0.9867 | 0.9851 | 0.9995 | 0.9702 |
+| nf-unsw-nb15-v2 | XGBoost | 0.9975 | 0.9798 | 0.9878 | 0.9838 | 0.9998 | 0.9676 |
+| nf-unsw-nb15-v2 | GraphSAGE | 0.9941 | 0.9659 | 0.9928 | 0.9789 | 0.9991 | 0.9583 |
+
+**Phát hiện quan trọng: số liệu GraphSAGE gần như KHÔNG ĐỔI so với trước khi sửa lỗi** (CSE-CIC: F1-macro 0.9880→0.9879, gần như y hệt; UNSW-NB15: 0.9776→0.9789, **nhích lên**). Baseline (RF/XGBoost) y hệt tuyệt đối so với trước (không dùng lại model/data nào bị ảnh hưởng bởi lỗi).
+
+**Giải thích tại sao sửa lỗi rò rỉ mà điểm không giảm:** GraphSAGE quyết định dựa trên `[embedding node u, embedding node v, edge_attr]` — phần embedding node phụ thuộc **toàn bộ ngữ cảnh đồ thị xung quanh** (các luồng lân cận trong cùng cửa sổ), không cố định theo từng luồng đơn lẻ. Dù 1 luồng cụ thể (cùng `edge_attr`) xuất hiện ở cả 2 cửa sổ chồng lấp (1 rơi vào train, 1 rơi vào test), **ngữ cảnh đồ thị bao quanh nó khác nhau ở mỗi cửa sổ** — nên model không thể "tra cứu" thẳng ra đáp án như baseline (chỉ nhìn đúng 1 dòng dữ liệu, không có ngữ cảnh) có thể làm được. Lỗi rò rỉ **có thật và bắt buộc phải sửa** (đúng phương pháp luận, tránh bị hội đồng bắt lỗi khi hỏi sâu), nhưng **kiểm chứng thực tế xác nhận nó không hề thổi phồng kết quả đáng kể** — tăng độ tin cậy cho toàn bộ kết luận nghiên cứu.
+
+**Cần làm tiếp:** chạy lại TN2 (`evaluate_cross_dataset.py`) với model mới, cập nhật `docs/graphsage/03_ket_qua.md` (thay số liệu cũ bằng số liệu mới, vì đây là tài liệu tổng hợp sạch dùng viết báo cáo — không cần giữ song song 2 bảng như ở đây), sinh lại ảnh `report_figures/`.
+
+**2026-08-02 — Đã chạy lại TN2 với model mới, xác nhận kết luận RQ2 không đổi (nếu có thay đổi thì càng chắc chắn hơn):**
+
+| | Model | F1-macro (trước sửa) | F1-macro (sau sửa) | MCC (trước) | MCC (sau) |
+|---|---|---|---|---|---|
+| CSE-CIC→UNSW | Random Forest | 0.4899 | 0.4899 (y hệt) | 0.0000 | 0.0000 (y hệt) |
+| CSE-CIC→UNSW | XGBoost | 0.5065 | 0.5065 (y hệt) | 0.1080 | 0.1080 (y hệt) |
+| CSE-CIC→UNSW | GraphSAGE | 0.4698 | 0.4436 (giảm nhẹ) | -0.0577 | -0.1082 (tệ hơn) |
+| UNSW→CSE-CIC | Random Forest | 0.4465 | 0.4465 (y hệt) | -0.1056 | -0.1056 (y hệt) |
+| UNSW→CSE-CIC | XGBoost | 0.4701 | 0.4701 (y hệt) | -0.0329 | -0.0329 (y hệt) |
+| UNSW→CSE-CIC | GraphSAGE | 0.3502 | 0.3398 (giảm nhẹ) | -0.2430 | -0.2753 (tệ hơn) |
+
+Baseline y hệt tuyệt đối (không dùng lại model/data bị ảnh hưởng). GraphSAGE giảm nhẹ, không tăng — model "sạch" hơn (không còn khả năng hưởng lợi dù nhỏ từ rò rỉ) càng lộ rõ việc không tổng quát hoá được sang môi trường khác. **Kết luận RQ2 giữ nguyên, được củng cố thêm chứ không bị lung lay.**

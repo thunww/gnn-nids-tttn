@@ -268,3 +268,31 @@
 **Kết luận RQ2 (chính thức):** mô hình (cả GNN lẫn ML truyền thống) huấn luyện trên 1 môi trường mạng **không tổng quát hoá được** sang môi trường mạng khác nếu không tinh chỉnh lại — đây là hạn chế thật, có bằng chứng định lượng (69,2% số mẫu có ít nhất 1 đặc trưng ngoài phạm vi phân phối train; 6,2% nếu tính theo từng giá trị đặc trưng đơn lẻ) và được xác nhận độc lập bởi y văn (feature drift, "collapse to random"). Giả thuyết ban đầu "GNN tổng quát hoá tốt hơn nhờ học cấu trúc" (kế hoạch nghiên cứu mục 6.3) **không được xác nhận** với kiến trúc E-GraphSAGE cụ thể đã triển khai — lý do kỹ thuật cụ thể: tỷ trọng đặc trưng thô/nhạy-quy-mô-mạng trong node feature quá cao so với phần cấu trúc thuần.
 
 **Quyết định: không cố "sửa" để ra số đẹp hơn.** TN2 vốn thiết kế để KIỂM TRA khả năng tổng quát hoá, không phải để tối ưu điểm số — kết quả kém chính là câu trả lời khoa học thật cho câu hỏi nghiên cứu (RQ2), có giá trị đưa vào phần "Hạn chế và hướng phát triển" của báo cáo. Hướng cải thiện tiềm năng (self-supervised learning, kiểu Anomal-E) được ghi nhận là **hướng nghiên cứu tương lai chưa kiểm chứng**, không triển khai ngay do khối lượng công việc lớn (đổi toàn bộ phạm trù huấn luyện, không phải sửa nhỏ) và không có bằng chứng y văn đảm bảo giải quyết được đúng vấn đề này.
+
+## ⚠️ 2026-07-31/08-02 — Phát hiện + sửa lỗi RÒ RỈ DỮ LIỆU trong Graph Builder — bảng TN1 ở trên (2026-07-26) đã LỖI THỜI
+
+**Chi tiết đầy đủ nguyên nhân + cách sửa: xem `docs/decisions.md` mục 2026-07-31.** Tóm tắt: cửa sổ trượt chồng lấp 50% bị `train_test_split()` xáo trộn ngẫu nhiên trước khi chia train/val/test — đo được **46,2%** cặp cửa sổ liền kề bị tách khác tập, gây rò rỉ dữ liệu giữa train và test. Đã sửa `run_graph_builder.py` (chia theo khối liên tục theo thời gian + purge gap), dựng lại đồ thị, **train lại GraphSAGE từ đầu cho cả 2 bộ**.
+
+**Kết quả TN1 sau khi sửa (chính thức, thay thế hoàn toàn bảng 2026-07-26 ở trên):**
+
+**CSE-CIC-IDS2018-v2:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.9940 | 0.9879 | 0.9832 | 0.9856 | 0.9862 | 0.9711 |
+| XGBoost | 0.9959 | **0.9975** | 0.9829 | **0.9901** | **0.9931** | **0.9804** |
+| GraphSAGE | 0.9950 | 0.9969 | 0.9793 | 0.9879 | 0.9888 | 0.9760 |
+
+**UNSW-NB15-v2:**
+
+| Model | Accuracy | Precision | Recall | F1-macro | AUC-ROC | MCC |
+|---|---|---|---|---|---|---|
+| Random Forest | 0.9977 | 0.9835 | 0.9867 | **0.9851** | 0.9995 | **0.9702** |
+| XGBoost | 0.9975 | 0.9798 | 0.9878 | 0.9838 | **0.9998** | 0.9676 |
+| GraphSAGE | 0.9941 | 0.9659 | **0.9928** | 0.9789 | 0.9991 | 0.9583 |
+
+**Phát hiện quan trọng: số liệu GraphSAGE gần như không đổi so với trước khi sửa** (CSE-CIC F1-macro 0.9880→0.9879; UNSW-NB15 0.9776→0.9789, nhích lên) — baseline y hệt tuyệt đối (không bị ảnh hưởng bởi lỗi). Giải thích: GraphSAGE quyết định dựa trên ngữ cảnh đồ thị xung quanh (embedding node phụ thuộc toàn bộ hàng xóm trong cửa sổ), không "tra cứu" trực tiếp theo từng luồng đơn lẻ như baseline — nên dù có rò rỉ ở mức luồng, model khó "học thuộc" theo kiểu đơn giản. **Lỗi vẫn bắt buộc phải sửa vì đúng phương pháp luận**, nhưng việc kiểm chứng không thấy ảnh hưởng đáng kể là tín hiệu tích cực, tăng độ tin cậy kết luận nghiên cứu.
+
+**Kết luận RQ1 (chính thức, cập nhật):** không đổi so với kết luận trước — GNN (GraphSAGE) đạt hiệu quả tương đương, cạnh tranh được với ML truyền thống, không vượt trội nhưng cũng không thua kém đáng kể.
+
+**TN2 chạy lại với model mới (2026-08-02):** baseline y hệt tuyệt đối so với trước (không dùng lại gì bị ảnh hưởng bởi lỗi). GraphSAGE: CSE-CIC→UNSW F1-macro 0.4698→0.4436 (giảm nhẹ), UNSW→CSE-CIC F1-macro 0.3502→0.3398 (giảm nhẹ) — **kết luận RQ2 không đổi, càng được củng cố** (model "sạch" hơn thể hiện kém hơn 1 chút khi tổng quát hoá, không phải tốt hơn). Số liệu đầy đủ: `docs/graphsage/03_ket_qua.md`.
