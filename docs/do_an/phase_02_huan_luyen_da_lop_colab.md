@@ -1,6 +1,6 @@
 # Phase 02 — Binary, multiclass và huấn luyện trên Colab
 
-**Trạng thái:** chưa triển khai. **Thời gian:** tuần 2–3.  
+**Trạng thái:** mã nguồn và test hoàn thành (07/11/2026), chưa train đầy đủ — xem [báo cáo](../../results/graduation/phase_reports/phase_02.md). **Thời gian:** tuần 2–3.  
 **Phụ thuộc:** dữ liệu/split audit đạt phase 01; đọc [quy ước artifact](quy_uoc_du_lieu.md).
 
 ## Mục tiêu và cách hiểu
