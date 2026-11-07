@@ -63,6 +63,36 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
+def load_shard(path: Path, benign_id: int | None = None) -> list:
+    """Nap 1 shard. benign_id != None => gop nhan multiclass thanh binary (0=Benign, 1=Attack)."""
+    graphs = torch.load(path, weights_only=False)
+    if benign_id is not None:
+        for g in graphs:
+            g.y = (g.y != benign_id).long()
+    return graphs
+
+
+def resolve_graphs(ds_dir: Path, task: str) -> tuple[Path, dict, int | None]:
+    """Tra ve (thu muc do thi, meta, benign_id can gop nhan).
+
+    Binary dung lai do thi multiclass (chi khac nhan y) neu khong co thu muc binary rieng -- tiet
+    kiem ~15 GB cho CSE-CIC. Mapping binary lay tu contract.json cua ETL."""
+    direct = ds_dir / "graphs" / task
+    if (direct / "meta.json").exists():
+        return direct, load_meta(direct), None
+    if task != "binary":
+        raise FileNotFoundError(f"Khong co do thi cho task {task} trong {ds_dir / 'graphs'}")
+    mc_dir = ds_dir / "graphs" / "multiclass"
+    meta = load_meta(mc_dir)
+    contract = json.loads((ds_dir / "contract.json").read_text(encoding="utf-8"))
+    binary = contract["label_mappings"]["binary"]
+    binary["class_names"] = {int(k): v for k, v in binary["class_names"].items()}
+    benign_id = int(meta["label_mapping"]["benign_class_id"])
+    meta = {**meta, "task": "binary", "target_col": TARGET_COLS["binary"], "label_mapping": binary,
+            "derived_from": "multiclass"}
+    return mc_dir, meta, benign_id
+
+
 def shard_paths(graph_dir: Path, split: str) -> list[Path]:
     paths = sorted(graph_dir.glob(f"{split}_shard_*.pt"))
     if not paths:
@@ -106,11 +136,11 @@ def load_bundle(path: Path, device: torch.device | str = "cpu") -> tuple[GraphSA
 # --------------------------------------------------------------------------- nhan / weights
 
 
-def unique_train_flow_labels(paths: list[Path]) -> np.ndarray:
+def unique_train_flow_labels(paths: list[Path], benign_id: int | None = None) -> np.ndarray:
     """Nhan cua cac flow train DUY NHAT (mot flow nam trong 2 cua so chong lap chi tinh mot lan)."""
     ids, ys = [], []
     for p in paths:
-        graphs = torch.load(p, weights_only=False)
+        graphs = load_shard(p, benign_id)
         ids.append(torch.cat([g.flow_id for g in graphs]).numpy())
         ys.append(torch.cat([g.y for g in graphs]).numpy())
         del graphs
@@ -138,13 +168,14 @@ def class_weights(labels: np.ndarray, num_classes: int, loss: str, beta: float =
 
 
 @torch.no_grad()
-def predict_flows(model: nn.Module, paths: list[Path], device: torch.device, batch_size: int = BATCH_SIZE) -> pd.DataFrame:
+def predict_flows(model: nn.Module, paths: list[Path], device: torch.device, batch_size: int = BATCH_SIZE,
+                  benign_id: int | None = None) -> pd.DataFrame:
     """Du doan tren cac shard, gop theo flow_id (trung binh xac suat qua cac cua so chua flow do).
     Tra ve DataFrame [flow_id, y_true, y_pred] + cot proba_<i>."""
     model.eval()
     ids, ys, probs = [], [], []
     for p in paths:
-        graphs = torch.load(p, weights_only=False)
+        graphs = load_shard(p, benign_id)
         for batch in DataLoader(graphs, batch_size=batch_size):
             batch = batch.to(device)
             out = model(batch.x, batch.edge_index, batch.edge_attr)
@@ -186,8 +217,7 @@ def confusion(pred: pd.DataFrame, mapping: dict) -> tuple[pd.DataFrame, pd.DataF
 def train(args: argparse.Namespace) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ds_dir = args.processed / args.dataset
-    graph_dir = ds_dir / "graphs" / args.task
-    meta = load_meta(graph_dir)
+    graph_dir, meta, relabel = resolve_graphs(ds_dir, args.task)
     mapping = meta["label_mapping"]
 
     hidden = args.hidden_dim or HIDDEN_DIM_BY_DATASET.get(args.dataset, HIDDEN_DIM)
@@ -200,7 +230,7 @@ def train(args: argparse.Namespace) -> dict:
     if args.max_train_shards:
         train_paths = train_paths[: args.max_train_shards]
 
-    labels = unique_train_flow_labels(train_paths)
+    labels = unique_train_flow_labels(train_paths, relabel)
     weights = class_weights(labels, cfg["num_classes"], args.loss)
     absent = [mapping["class_names"][i] for i in range(cfg["num_classes"]) if (labels == i).sum() == 0]
     print(f"[{args.dataset}/{args.task}] device={device} flow train duy nhat={len(labels)} "
@@ -232,7 +262,7 @@ def train(args: argparse.Namespace) -> dict:
         random.shuffle(order)
         total, n_graphs = 0.0, 0
         for p in order:
-            graphs = torch.load(p, weights_only=False)
+            graphs = load_shard(p, relabel)
             for batch in DataLoader(graphs, batch_size=args.batch_size, shuffle=True):
                 batch = batch.to(device)
                 optimizer.zero_grad()
@@ -244,7 +274,7 @@ def train(args: argparse.Namespace) -> dict:
             del graphs
         gc.collect()
 
-        pred = predict_flows(model, val_paths, device, args.batch_size)
+        pred = predict_flows(model, val_paths, device, args.batch_size, relabel)
         val = metrics_from_predictions(pred, mapping)
         scheduler.step(val["f1_macro"])
         row = {"epoch": epoch, "loss": total / max(n_graphs, 1), "val_acc": val["accuracy"],
@@ -293,13 +323,13 @@ def evaluate_test(args: argparse.Namespace) -> dict:
     va chi 'flow moi' khong co vector trung train)."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ds_dir = args.processed / args.dataset
-    graph_dir = ds_dir / "graphs" / args.task
+    graph_dir, _, relabel = resolve_graphs(ds_dir, args.task)
     run_dir = run_dir_for(args)
     model, bundle = load_bundle(run_dir / "best_bundle.pt", device)
     mapping = bundle["label_mapping"]
     mapping["class_names"] = {int(k): v for k, v in mapping["class_names"].items()}
 
-    pred = predict_flows(model, shard_paths(graph_dir, "test"), device, args.batch_size)
+    pred = predict_flows(model, shard_paths(graph_dir, "test"), device, args.batch_size, relabel)
     pred.to_parquet(run_dir / "test_predictions.parquet", index=False)
     res = {"full_test": metrics_from_predictions(pred, mapping), "flows": len(pred)}
 

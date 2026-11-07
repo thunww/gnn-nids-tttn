@@ -204,3 +204,22 @@ def test_read_raw_matches_plain_read_csv(tmp_path):
     assert np.allclose(got[["F_A", "F_B"]].to_numpy(), raw[["F_A", "F_B"]].to_numpy())
     assert got["L4_SRC_PORT"].tolist() == raw["L4_SRC_PORT"].tolist()
     assert len(read_raw(path, 20, chunk_rows=7)) == 20
+
+
+def test_read_raw_saturates_absurd_values_instead_of_inf(tmp_path):
+    from etl.run_etl_v2 import read_raw
+
+    raw = pd.DataFrame(
+        {
+            "IPV4_SRC_ADDR": ["10.0.0.1"] * 4, "L4_SRC_PORT": [1] * 4,
+            "IPV4_DST_ADDR": ["10.0.0.2"] * 4, "L4_DST_PORT": [2] * 4,
+            "F_A": [1.0, 1.3e300, 3.0, 4.0], "F_B": [1.0, 2.0, 3.0, 4.0],
+            "Label": [0] * 4, "Attack": ["Benign"] * 4,
+        }
+    )
+    path = tmp_path / "x.csv"
+    raw.to_csv(path, index=False)
+    df = read_raw(path, None)
+    assert np.isfinite(df[["F_A", "F_B"]].to_numpy()).all()
+    assert df.attrs["saturated_values"] == {"F_A": 1}
+    assert df["F_A"].iloc[1] == np.finfo("float32").max

@@ -138,3 +138,40 @@ def test_evaluate_test_writes_predictions_and_confusion(tmp_path):
     cm = pd.read_csv(run / "test_confusion_raw.csv", index_col=0)
     assert cm.shape == (3, 3) and cm.to_numpy().sum() == len(pred)
     assert list(cm.index) == ["Benign", "DoS", "Scan"]  # thu tu lop co dinh theo mapping
+
+
+def test_binary_derived_from_multiclass_graphs(tmp_path):
+    from etl.protocol import build_label_mapping
+
+    root = setup_root(tmp_path)
+    ds = root / "nf-unsw-nb15-v2"
+    # contract.json (nhu ETL ghi) co mapping cho ca 2 task; KHONG co thu muc graphs/binary
+    attack = pd.Series(["Benign", "DoS", "Scan"])
+    contract = {"label_mappings": {"binary": build_label_mapping(attack, "binary"),
+                                   "multiclass": build_label_mapping(attack, "multiclass")}}
+    (ds / "contract.json").write_text(json.dumps(contract), encoding="utf-8")
+    assert not (ds / "graphs" / "binary").exists()
+
+    args = parse_args(["--dataset", "nf-unsw-nb15-v2", "--task", "binary", "--processed", str(root),
+                       "--hidden-dim", "8", "--batch-size", "4", "--epochs", "6", "--patience", "50"])
+    state = train(args)
+    assert state["best_f1"] > 0.5
+    _, bundle = load_bundle(ds / "models" / "binary" / "graphsage_cb_seed42" / "best_bundle.pt")
+    assert bundle["model_config"]["num_classes"] == 2 and bundle["benign_class_id"] == 0
+    assert bundle["label_mapping"]["class_names"] == {0: "Benign", 1: "Attack"} or \
+        {int(k): v for k, v in bundle["label_mapping"]["class_names"].items()} == {0: "Benign", 1: "Attack"}
+
+
+def test_relabel_matches_directly_built_binary_labels():
+    from models.train_gnn_v2 import load_shard
+    import glob
+
+    mc = sorted(glob.glob("data/processed_v2/nf-unsw-nb15-v2/graphs/multiclass/val_shard_*.pt"))
+    bi = sorted(glob.glob("data/processed_v2/nf-unsw-nb15-v2/graphs/binary/val_shard_*.pt"))
+    if not (mc and bi):
+        import pytest
+        pytest.skip("can du lieu UNSW local da dung do thi binary + multiclass")
+    a, b = load_shard(__import__("pathlib").Path(mc[0]), benign_id=2), torch.load(bi[0], weights_only=False)
+    assert len(a) == len(b)
+    for ga, gb in zip(a[:20], b[:20]):
+        assert torch.equal(ga.y, gb.y) and torch.equal(ga.flow_id, gb.flow_id)

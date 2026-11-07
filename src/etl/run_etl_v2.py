@@ -73,11 +73,22 @@ def read_raw(path: Path, max_rows: int | None, chunk_rows: int = 1_000_000) -> p
     codes = {c: np.empty(n, dtype="int32") for c in ip_cols + [ATTACK_COL]}
     vocab = {c: {} for c in codes}
 
-    dtype = {c: "float32" for c in feats} | {c: "int32" for c in port_cols} | {LABEL_COL: "int8"}
+    # Dac trung doc ra float64 theo tung khoi roi ep ve float32 co kiem soat: vai cot (vd
+    # SRC_TO_DST_SECOND_BYTES) co gia tri vo ly ~1e300 trong CSV goc, float32 se tran thanh inf.
+    # Bao hoa ve gia tri huu han lon nhat cua float32 (sau do bi clip ve phan vi 99% nhu cu).
+    dtype = {c: "float64" for c in feats} | {c: "int32" for c in port_cols} | {LABEL_COL: "int8"}
+    f32max = float(np.finfo("float32").max)
+    saturated = {}
     pos = 0
     for chunk in pd.read_csv(path, dtype=dtype, chunksize=chunk_rows, nrows=n, low_memory=False):
         m = len(chunk)
-        feat[pos : pos + m] = chunk[feats].to_numpy(dtype="float32")
+        block = chunk[feats].to_numpy(dtype="float64")
+        over = np.abs(block) > f32max
+        if over.any():
+            for j in np.where(over.any(axis=0))[0]:
+                saturated[feats[j]] = saturated.get(feats[j], 0) + int(over[:, j].sum())
+            block = np.clip(block, -f32max, f32max)
+        feat[pos : pos + m] = block.astype("float32")
         for c in port_cols:
             ports[c][pos : pos + m] = chunk[c].to_numpy()
         label[pos : pos + m] = chunk[LABEL_COL].to_numpy()
@@ -89,6 +100,8 @@ def read_raw(path: Path, max_rows: int | None, chunk_rows: int = 1_000_000) -> p
         pos += m
         del chunk
     assert pos == n, f"doc {pos} dong, ky vong {n}"
+    for c in saturated:
+        print(f"  [canh bao] cot {c}: {saturated[c]} gia tri vuot gioi han float32, bao hoa ve max huu han")
 
     df = pd.DataFrame(feat, columns=feats, copy=False)
     df[LABEL_COL] = label  # thu tu cot cuoi cung giong CSV: ids, dac trung, Label, Attack
@@ -98,6 +111,7 @@ def read_raw(path: Path, max_rows: int | None, chunk_rows: int = 1_000_000) -> p
             pd.Categorical.from_codes(codes[c], categories=list(vocab[c])) if c in ip_cols else ports[c]
         )
         df.insert(i, c, arr)
+    df.attrs["saturated_values"] = saturated
     return df
 
 
@@ -118,6 +132,7 @@ def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None
 
     df = read_raw(raw_dir / dataset / filename, max_rows)
     n_raw = len(df)
+    saturated = dict(df.attrs.get("saturated_values", {}))
     _mem("after_read")
 
     # flow_id = vi tri dong trong CSV goc, tinh TRUOC khi loc -> moi dong bi bo deu truy vet duoc.
@@ -192,6 +207,7 @@ def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None
     audit = {
         "dataset": dataset,
         "raw_rows": n_raw,
+        "saturated_values_by_column": saturated,
         "dropped_duplicate": n_dup,
         "dropped_missing": n_na,
         "purged_at_boundaries": n_purged,
