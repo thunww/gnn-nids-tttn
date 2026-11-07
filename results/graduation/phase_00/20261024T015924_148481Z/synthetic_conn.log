@@ -1,0 +1,4 @@
+#separator \x09
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	proto	ip_proto	duration	orig_bytes	resp_bytes	orig_pkts	resp_pkts	orig_ip_bytes	resp_ip_bytes	history
+1	fixture_0	10.0.0.1	1234	10.0.0.2	22	tcp	6	0.5	100	200	3	4	220	360	ShADadFf
+1	fixture_1	10.0.0.1	1234	10.0.0.2	22	tcp	6	0.5	100	200	3	4	220	360	ShADadFf

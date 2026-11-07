@@ -1,0 +1,1454 @@
+{
+  "started_utc": "20261024T015924_148481Z",
+  "data_root": "D:\\GNN-NIDS_TTTN\\data",
+  "python": "3.12.6 (tags/v3.12.6:a4a2d2b, Sep  6 2024, 20:11:23) [MSC v.1940 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "sections": {
+    "inventory": {
+      "status": "passed",
+      "seconds": 0.004625100060366094,
+      "result": [
+        {
+          "path": "processed/cross_dataset_metrics.csv",
+          "bytes": 1046
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/attack_label_mapping.json",
+          "bytes": 423
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/full_chronological.parquet",
+          "bytes": 719473414
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/models/graphsage_best.pt",
+          "bytes": 505981
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/models/random_forest.joblib",
+          "bytes": 3101951913
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/models/xgboost.joblib",
+          "bytes": 2685406
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/scaler.joblib",
+          "bytes": 2543
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/test.parquet",
+          "bytes": 108410422
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/test_graphs.pt",
+          "bytes": 2336269615
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train.parquet",
+          "bytes": 504120771
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard0.pt",
+          "bytes": 1814764479
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard1.pt",
+          "bytes": 1814261311
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard2.pt",
+          "bytes": 1814750335
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard3.pt",
+          "bytes": 1814494143
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard4.pt",
+          "bytes": 1814302207
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard5.pt",
+          "bytes": 1814430591
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/train_graphs_shard6.pt",
+          "bytes": 19814283
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/upper_bound.joblib",
+          "bytes": 3284
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/val.parquet",
+          "bytes": 108278917
+        },
+        {
+          "path": "processed/nf-cse-cic-ids2018-v2/val_graphs.pt",
+          "bytes": 2336720549
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/attack_label_mapping.json",
+          "bytes": 198
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/full_chronological.parquet",
+          "bytes": 68722554
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/models/graphsage_best.pt",
+          "bytes": 56701
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/models/random_forest.joblib",
+          "bytes": 160416553
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/models/xgboost.joblib",
+          "bytes": 1588016
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/scaler.joblib",
+          "bytes": 2543
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/test.parquet",
+          "bytes": 14429468
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/test_graphs.pt",
+          "bytes": 286615823
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/train.parquet",
+          "bytes": 65823441
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/train_graphs_shard0.pt",
+          "bytes": 442252799
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/train_graphs_shard1.pt",
+          "bytes": 444539967
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/train_graphs_shard2.pt",
+          "bytes": 439266367
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/train_graphs_shard3.pt",
+          "bytes": 18120039
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/upper_bound.joblib",
+          "bytes": 3284
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/val.parquet",
+          "bytes": 14471335
+        },
+        {
+          "path": "processed/nf-unsw-nb15-v2/val_graphs.pt",
+          "bytes": 289712441
+        },
+        {
+          "path": "processed/README.md",
+          "bytes": 264
+        },
+        {
+          "path": "processed/test_metrics.csv",
+          "bytes": 938
+        },
+        {
+          "path": "processed.zip",
+          "bytes": 5522567566
+        },
+        {
+          "path": "raw/nf-cse-cic-ids2018-v2/NetFlow_v2_Features.csv",
+          "bytes": 2115
+        },
+        {
+          "path": "raw/nf-cse-cic-ids2018-v2/NF-CSE-CIC-IDS2018-v2.csv",
+          "bytes": 3221378977
+        },
+        {
+          "path": "raw/nf-unsw-nb15-v2/NetFlow_v2_Features.csv",
+          "bytes": 2115
+        },
+        {
+          "path": "raw/nf-unsw-nb15-v2/NF-UNSW-NB15-v2.csv",
+          "bytes": 441867785
+        }
+      ]
+    },
+    "datasets": {
+      "status": "passed",
+      "seconds": 31.42520020005759,
+      "result": {
+        "nf-cse-cic-ids2018-v2": {
+          "raw_exists": true,
+          "processed_exists": true,
+          "raw_columns": [
+            "IPV4_SRC_ADDR",
+            "L4_SRC_PORT",
+            "IPV4_DST_ADDR",
+            "L4_DST_PORT",
+            "PROTOCOL",
+            "L7_PROTO",
+            "IN_BYTES",
+            "IN_PKTS",
+            "OUT_BYTES",
+            "OUT_PKTS",
+            "TCP_FLAGS",
+            "CLIENT_TCP_FLAGS",
+            "SERVER_TCP_FLAGS",
+            "FLOW_DURATION_MILLISECONDS",
+            "DURATION_IN",
+            "DURATION_OUT",
+            "MIN_TTL",
+            "MAX_TTL",
+            "LONGEST_FLOW_PKT",
+            "SHORTEST_FLOW_PKT",
+            "MIN_IP_PKT_LEN",
+            "MAX_IP_PKT_LEN",
+            "SRC_TO_DST_SECOND_BYTES",
+            "DST_TO_SRC_SECOND_BYTES",
+            "RETRANSMITTED_IN_BYTES",
+            "RETRANSMITTED_IN_PKTS",
+            "RETRANSMITTED_OUT_BYTES",
+            "RETRANSMITTED_OUT_PKTS",
+            "SRC_TO_DST_AVG_THROUGHPUT",
+            "DST_TO_SRC_AVG_THROUGHPUT",
+            "NUM_PKTS_UP_TO_128_BYTES",
+            "NUM_PKTS_128_TO_256_BYTES",
+            "NUM_PKTS_256_TO_512_BYTES",
+            "NUM_PKTS_512_TO_1024_BYTES",
+            "NUM_PKTS_1024_TO_1514_BYTES",
+            "TCP_WIN_MAX_IN",
+            "TCP_WIN_MAX_OUT",
+            "ICMP_TYPE",
+            "ICMP_IPV4_TYPE",
+            "DNS_QUERY_ID",
+            "DNS_QUERY_TYPE",
+            "DNS_TTL_ANSWER",
+            "FTP_COMMAND_RET_CODE",
+            "Label",
+            "Attack"
+          ],
+          "missing_model_features": [],
+          "unexpected_columns": [],
+          "timestamp_columns": [],
+          "raw_first_4096": {
+            "rows": 4096,
+            "missing_cells": 0,
+            "nonfinite_numeric_cells": 0,
+            "duplicates": 0,
+            "scope": "prefix sample only; not full dataset validation"
+          },
+          "raw_labels": {
+            "rows": 18893708,
+            "counts": {
+              "Label": {
+                "0": 16635567,
+                "1": 2258141
+              },
+              "Attack": {
+                "Benign": 16635567,
+                "DDOS attack-HOIC": 1080858,
+                "DoS attacks-Hulk": 432648,
+                "DDoS attacks-LOIC-HTTP": 307300,
+                "Bot": 143097,
+                "Infilteration": 116361,
+                "SSH-Bruteforce": 94979,
+                "DoS attacks-GoldenEye": 27723,
+                "FTP-BruteForce": 25933,
+                "DoS attacks-SlowHTTPTest": 14116,
+                "DoS attacks-Slowloris": 9512,
+                "Brute Force -Web": 2143,
+                "DDOS attack-LOIC-UDP": 2112,
+                "SQL Injection": 432,
+                "Brute Force -XSS": 927
+              }
+            },
+            "missing_labels": {
+              "Label": 0,
+              "Attack": 0
+            },
+            "scope": "full CSV, labels only; not a full data-quality scan"
+          },
+          "parquet": {
+            "train": {
+              "rows": 13225205,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 11644896,
+                  "1": 1580309
+                },
+                "Attack": {
+                  "Benign": 11644896,
+                  "DDOS attack-HOIC": 756601,
+                  "DoS attacks-Hulk": 302854,
+                  "DDoS attacks-LOIC-HTTP": 215110,
+                  "Bot": 100168,
+                  "Infilteration": 81063,
+                  "SSH-Bruteforce": 66485,
+                  "DoS attacks-GoldenEye": 19406,
+                  "FTP-BruteForce": 18153,
+                  "DoS attacks-SlowHTTPTest": 9881,
+                  "DoS attacks-Slowloris": 6658,
+                  "DDOS attack-LOIC-UDP": 1478,
+                  "Brute Force -Web": 1500,
+                  "Brute Force -XSS": 649,
+                  "SQL Injection": 303
+                },
+                "Attack_encoded": {
+                  "0": 11644896,
+                  "4": 756601,
+                  "8": 302854,
+                  "6": 215110,
+                  "1": 100168,
+                  "12": 81063,
+                  "14": 66485,
+                  "7": 19406,
+                  "11": 18153,
+                  "9": 9881,
+                  "10": 6658,
+                  "5": 1478,
+                  "2": 1500,
+                  "3": 649,
+                  "13": 303
+                }
+              }
+            },
+            "val": {
+              "rows": 2833973,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 2495336,
+                  "1": 338637
+                },
+                "Attack": {
+                  "Benign": 2495336,
+                  "DDOS attack-HOIC": 162128,
+                  "DoS attacks-Hulk": 64897,
+                  "DDoS attacks-LOIC-HTTP": 46095,
+                  "Bot": 21465,
+                  "Infilteration": 17370,
+                  "SSH-Bruteforce": 14247,
+                  "DoS attacks-GoldenEye": 4158,
+                  "FTP-BruteForce": 3890,
+                  "DoS attacks-SlowHTTPTest": 2118,
+                  "DoS attacks-Slowloris": 1427,
+                  "Brute Force -Web": 321,
+                  "DDOS attack-LOIC-UDP": 317,
+                  "Brute Force -XSS": 139,
+                  "SQL Injection": 65
+                },
+                "Attack_encoded": {
+                  "0": 2495336,
+                  "4": 162128,
+                  "8": 64897,
+                  "6": 46095,
+                  "1": 21465,
+                  "12": 17370,
+                  "14": 14247,
+                  "7": 4158,
+                  "11": 3890,
+                  "9": 2118,
+                  "10": 1427,
+                  "2": 321,
+                  "5": 317,
+                  "3": 139,
+                  "13": 65
+                }
+              }
+            },
+            "test": {
+              "rows": 2833973,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 2495335,
+                  "1": 338638
+                },
+                "Attack": {
+                  "Benign": 2495335,
+                  "DDOS attack-HOIC": 162129,
+                  "DoS attacks-Hulk": 64897,
+                  "DDoS attacks-LOIC-HTTP": 46095,
+                  "Bot": 21464,
+                  "Infilteration": 17371,
+                  "SSH-Bruteforce": 14247,
+                  "DoS attacks-GoldenEye": 4159,
+                  "FTP-BruteForce": 3890,
+                  "DoS attacks-SlowHTTPTest": 2117,
+                  "DoS attacks-Slowloris": 1427,
+                  "DDOS attack-LOIC-UDP": 317,
+                  "Brute Force -Web": 322,
+                  "Brute Force -XSS": 139,
+                  "SQL Injection": 64
+                },
+                "Attack_encoded": {
+                  "0": 2495335,
+                  "4": 162129,
+                  "8": 64897,
+                  "6": 46095,
+                  "1": 21464,
+                  "12": 17371,
+                  "14": 14247,
+                  "7": 4159,
+                  "11": 3890,
+                  "9": 2117,
+                  "10": 1427,
+                  "5": 317,
+                  "2": 322,
+                  "3": 139,
+                  "13": 64
+                }
+              }
+            },
+            "full_chronological": {
+              "rows": 18893151,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 16635567,
+                  "1": 2257584
+                },
+                "Attack": {
+                  "Benign": 16635567,
+                  "DDOS attack-HOIC": 1080858,
+                  "DoS attacks-Hulk": 432648,
+                  "DDoS attacks-LOIC-HTTP": 307300,
+                  "Bot": 143097,
+                  "Infilteration": 115804,
+                  "SSH-Bruteforce": 94979,
+                  "DoS attacks-GoldenEye": 27723,
+                  "FTP-BruteForce": 25933,
+                  "DoS attacks-SlowHTTPTest": 14116,
+                  "DoS attacks-Slowloris": 9512,
+                  "Brute Force -Web": 2143,
+                  "DDOS attack-LOIC-UDP": 2112,
+                  "SQL Injection": 432,
+                  "Brute Force -XSS": 927
+                },
+                "Attack_encoded": {
+                  "0": 16635567,
+                  "4": 1080858,
+                  "8": 432648,
+                  "6": 307300,
+                  "1": 143097,
+                  "12": 115804,
+                  "14": 94979,
+                  "7": 27723,
+                  "11": 25933,
+                  "9": 14116,
+                  "10": 9512,
+                  "2": 2143,
+                  "5": 2112,
+                  "13": 432,
+                  "3": 927
+                }
+              }
+            }
+          },
+          "graph_partition_projection": {
+            "scope": "projection from current code and source-order table; archives not deserialized",
+            "window": 2000,
+            "step": 1000,
+            "total_graphs_before_purge": 18892,
+            "splits": {
+              "train": {
+                "graphs": 13224,
+                "first_row": 0,
+                "end_row_exclusive": 13225000,
+                "unique_flow_class_counts": {
+                  "Benign": 11644602,
+                  "DDOS attack-HOIC": 756151,
+                  "DoS attacks-Hulk": 302909,
+                  "DDoS attacks-LOIC-HTTP": 215255,
+                  "Bot": 100342,
+                  "Infilteration": 80900,
+                  "SSH-Bruteforce": 66707,
+                  "DoS attacks-GoldenEye": 19437,
+                  "FTP-BruteForce": 18215,
+                  "DoS attacks-SlowHTTPTest": 9891,
+                  "DoS attacks-Slowloris": 6652,
+                  "Brute Force -Web": 1541,
+                  "DDOS attack-LOIC-UDP": 1453,
+                  "SQL Injection": 292,
+                  "Brute Force -XSS": 653
+                }
+              },
+              "val": {
+                "graphs": 2833,
+                "first_row": 13225000,
+                "end_row_exclusive": 16059000,
+                "unique_flow_class_counts": {
+                  "Benign": 2495029,
+                  "DDOS attack-HOIC": 162731,
+                  "DoS attacks-Hulk": 64937,
+                  "DDoS attacks-LOIC-HTTP": 46032,
+                  "Bot": 21248,
+                  "Infilteration": 17438,
+                  "SSH-Bruteforce": 14160,
+                  "DoS attacks-GoldenEye": 4125,
+                  "FTP-BruteForce": 3884,
+                  "DoS attacks-SlowHTTPTest": 2147,
+                  "DoS attacks-Slowloris": 1403,
+                  "Brute Force -Web": 322,
+                  "DDOS attack-LOIC-UDP": 333,
+                  "Brute Force -XSS": 141,
+                  "SQL Injection": 70
+                }
+              },
+              "test": {
+                "graphs": 2833,
+                "first_row": 16059000,
+                "end_row_exclusive": 18893000,
+                "unique_flow_class_counts": {
+                  "Benign": 2495799,
+                  "DDOS attack-HOIC": 161969,
+                  "DoS attacks-Hulk": 64798,
+                  "DDoS attacks-LOIC-HTTP": 46011,
+                  "Bot": 21507,
+                  "Infilteration": 17466,
+                  "SSH-Bruteforce": 14111,
+                  "DoS attacks-GoldenEye": 4161,
+                  "FTP-BruteForce": 3834,
+                  "DoS attacks-SlowHTTPTest": 2078,
+                  "DoS attacks-Slowloris": 1457,
+                  "Brute Force -XSS": 133,
+                  "DDOS attack-LOIC-UDP": 326,
+                  "Brute Force -Web": 280,
+                  "SQL Injection": 70
+                }
+              }
+            }
+          },
+          "mapping": {
+            "0": "Benign",
+            "1": "Bot",
+            "2": "Brute Force -Web",
+            "3": "Brute Force -XSS",
+            "4": "DDOS attack-HOIC",
+            "5": "DDOS attack-LOIC-UDP",
+            "6": "DDoS attacks-LOIC-HTTP",
+            "7": "DoS attacks-GoldenEye",
+            "8": "DoS attacks-Hulk",
+            "9": "DoS attacks-SlowHTTPTest",
+            "10": "DoS attacks-Slowloris",
+            "11": "FTP-BruteForce",
+            "12": "Infilteration",
+            "13": "SQL Injection",
+            "14": "SSH-Bruteforce"
+          },
+          "benign_multiclass_ids": [
+            "0"
+          ],
+          "scaler": {
+            "n_features": 39,
+            "order_matches_converter": true,
+            "finite_mean_scale": true,
+            "clip_order_matches": true,
+            "samples_seen": 13225205
+          },
+          "heavy_artifacts_not_loaded": [
+            "test_graphs.pt",
+            "train_graphs_shard0.pt",
+            "train_graphs_shard1.pt",
+            "train_graphs_shard2.pt",
+            "train_graphs_shard3.pt",
+            "train_graphs_shard4.pt",
+            "train_graphs_shard5.pt",
+            "train_graphs_shard6.pt",
+            "val_graphs.pt"
+          ]
+        },
+        "nf-unsw-nb15-v2": {
+          "raw_exists": true,
+          "processed_exists": true,
+          "raw_columns": [
+            "IPV4_SRC_ADDR",
+            "L4_SRC_PORT",
+            "IPV4_DST_ADDR",
+            "L4_DST_PORT",
+            "PROTOCOL",
+            "L7_PROTO",
+            "IN_BYTES",
+            "IN_PKTS",
+            "OUT_BYTES",
+            "OUT_PKTS",
+            "TCP_FLAGS",
+            "CLIENT_TCP_FLAGS",
+            "SERVER_TCP_FLAGS",
+            "FLOW_DURATION_MILLISECONDS",
+            "DURATION_IN",
+            "DURATION_OUT",
+            "MIN_TTL",
+            "MAX_TTL",
+            "LONGEST_FLOW_PKT",
+            "SHORTEST_FLOW_PKT",
+            "MIN_IP_PKT_LEN",
+            "MAX_IP_PKT_LEN",
+            "SRC_TO_DST_SECOND_BYTES",
+            "DST_TO_SRC_SECOND_BYTES",
+            "RETRANSMITTED_IN_BYTES",
+            "RETRANSMITTED_IN_PKTS",
+            "RETRANSMITTED_OUT_BYTES",
+            "RETRANSMITTED_OUT_PKTS",
+            "SRC_TO_DST_AVG_THROUGHPUT",
+            "DST_TO_SRC_AVG_THROUGHPUT",
+            "NUM_PKTS_UP_TO_128_BYTES",
+            "NUM_PKTS_128_TO_256_BYTES",
+            "NUM_PKTS_256_TO_512_BYTES",
+            "NUM_PKTS_512_TO_1024_BYTES",
+            "NUM_PKTS_1024_TO_1514_BYTES",
+            "TCP_WIN_MAX_IN",
+            "TCP_WIN_MAX_OUT",
+            "ICMP_TYPE",
+            "ICMP_IPV4_TYPE",
+            "DNS_QUERY_ID",
+            "DNS_QUERY_TYPE",
+            "DNS_TTL_ANSWER",
+            "FTP_COMMAND_RET_CODE",
+            "Label",
+            "Attack"
+          ],
+          "missing_model_features": [],
+          "unexpected_columns": [],
+          "timestamp_columns": [],
+          "raw_first_4096": {
+            "rows": 4096,
+            "missing_cells": 0,
+            "nonfinite_numeric_cells": 0,
+            "duplicates": 0,
+            "scope": "prefix sample only; not full dataset validation"
+          },
+          "raw_labels": {
+            "rows": 2390275,
+            "counts": {
+              "Label": {
+                "0": 2295222,
+                "1": 95053
+              },
+              "Attack": {
+                "Benign": 2295222,
+                "Fuzzers": 22310,
+                "Exploits": 31551,
+                "Reconnaissance": 12779,
+                "Generic": 16560,
+                "DoS": 5794,
+                "Shellcode": 1427,
+                "Backdoor": 2169,
+                "Worms": 164,
+                "Analysis": 2299
+              }
+            },
+            "missing_labels": {
+              "Label": 0,
+              "Attack": 0
+            },
+            "scope": "full CSV, labels only; not a full data-quality scan"
+          },
+          "parquet": {
+            "train": {
+              "rows": 1673192,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 1606655,
+                  "1": 66537
+                },
+                "Attack": {
+                  "Benign": 1606655,
+                  "Exploits": 22086,
+                  "Fuzzers": 15617,
+                  "Generic": 11592,
+                  "Reconnaissance": 8945,
+                  "DoS": 4056,
+                  "Backdoor": 1518,
+                  "Analysis": 1609,
+                  "Shellcode": 999,
+                  "Worms": 115
+                },
+                "Attack_encoded": {
+                  "2": 1606655,
+                  "4": 22086,
+                  "5": 15617,
+                  "6": 11592,
+                  "7": 8945,
+                  "3": 4056,
+                  "1": 1518,
+                  "0": 1609,
+                  "8": 999,
+                  "9": 115
+                }
+              }
+            },
+            "val": {
+              "rows": 358541,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 344283,
+                  "1": 14258
+                },
+                "Attack": {
+                  "Benign": 344283,
+                  "Exploits": 4732,
+                  "Fuzzers": 3346,
+                  "Generic": 2484,
+                  "Reconnaissance": 1917,
+                  "DoS": 869,
+                  "Backdoor": 326,
+                  "Analysis": 345,
+                  "Shellcode": 214,
+                  "Worms": 25
+                },
+                "Attack_encoded": {
+                  "2": 344283,
+                  "4": 4732,
+                  "5": 3346,
+                  "6": 2484,
+                  "7": 1917,
+                  "3": 869,
+                  "1": 326,
+                  "0": 345,
+                  "8": 214,
+                  "9": 25
+                }
+              }
+            },
+            "test": {
+              "rows": 358542,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 344284,
+                  "1": 14258
+                },
+                "Attack": {
+                  "Benign": 344284,
+                  "Exploits": 4733,
+                  "Fuzzers": 3347,
+                  "Generic": 2484,
+                  "Reconnaissance": 1917,
+                  "DoS": 869,
+                  "Analysis": 345,
+                  "Backdoor": 325,
+                  "Shellcode": 214,
+                  "Worms": 24
+                },
+                "Attack_encoded": {
+                  "2": 344284,
+                  "4": 4733,
+                  "5": 3347,
+                  "6": 2484,
+                  "7": 1917,
+                  "3": 869,
+                  "0": 345,
+                  "1": 325,
+                  "8": 214,
+                  "9": 24
+                }
+              }
+            },
+            "full_chronological": {
+              "rows": 2390275,
+              "columns": [
+                "IPV4_SRC_ADDR",
+                "L4_SRC_PORT",
+                "IPV4_DST_ADDR",
+                "L4_DST_PORT",
+                "PROTOCOL",
+                "L7_PROTO",
+                "IN_BYTES",
+                "IN_PKTS",
+                "OUT_BYTES",
+                "OUT_PKTS",
+                "TCP_FLAGS",
+                "CLIENT_TCP_FLAGS",
+                "SERVER_TCP_FLAGS",
+                "FLOW_DURATION_MILLISECONDS",
+                "DURATION_IN",
+                "DURATION_OUT",
+                "MIN_TTL",
+                "MAX_TTL",
+                "LONGEST_FLOW_PKT",
+                "SHORTEST_FLOW_PKT",
+                "MIN_IP_PKT_LEN",
+                "MAX_IP_PKT_LEN",
+                "SRC_TO_DST_SECOND_BYTES",
+                "DST_TO_SRC_SECOND_BYTES",
+                "RETRANSMITTED_IN_BYTES",
+                "RETRANSMITTED_IN_PKTS",
+                "RETRANSMITTED_OUT_BYTES",
+                "RETRANSMITTED_OUT_PKTS",
+                "SRC_TO_DST_AVG_THROUGHPUT",
+                "DST_TO_SRC_AVG_THROUGHPUT",
+                "NUM_PKTS_UP_TO_128_BYTES",
+                "NUM_PKTS_128_TO_256_BYTES",
+                "NUM_PKTS_256_TO_512_BYTES",
+                "NUM_PKTS_512_TO_1024_BYTES",
+                "NUM_PKTS_1024_TO_1514_BYTES",
+                "TCP_WIN_MAX_IN",
+                "TCP_WIN_MAX_OUT",
+                "ICMP_TYPE",
+                "ICMP_IPV4_TYPE",
+                "DNS_QUERY_ID",
+                "DNS_QUERY_TYPE",
+                "DNS_TTL_ANSWER",
+                "FTP_COMMAND_RET_CODE",
+                "Label",
+                "Attack",
+                "Attack_encoded"
+              ],
+              "counts": {
+                "Label": {
+                  "0": 2295222,
+                  "1": 95053
+                },
+                "Attack": {
+                  "Benign": 2295222,
+                  "Fuzzers": 22310,
+                  "Exploits": 31551,
+                  "Reconnaissance": 12779,
+                  "Generic": 16560,
+                  "DoS": 5794,
+                  "Shellcode": 1427,
+                  "Backdoor": 2169,
+                  "Worms": 164,
+                  "Analysis": 2299
+                },
+                "Attack_encoded": {
+                  "2": 2295222,
+                  "5": 22310,
+                  "4": 31551,
+                  "7": 12779,
+                  "6": 16560,
+                  "3": 5794,
+                  "8": 1427,
+                  "1": 2169,
+                  "9": 164,
+                  "0": 2299
+                }
+              }
+            }
+          },
+          "graph_partition_projection": {
+            "scope": "projection from current code and source-order table; archives not deserialized",
+            "window": 500,
+            "step": 250,
+            "total_graphs_before_purge": 9560,
+            "splits": {
+              "train": {
+                "graphs": 6692,
+                "first_row": 0,
+                "end_row_exclusive": 1673250,
+                "unique_flow_class_counts": {
+                  "Benign": 1628757,
+                  "Fuzzers": 10745,
+                  "Exploits": 14216,
+                  "Reconnaissance": 5615,
+                  "Generic": 8567,
+                  "DoS": 2617,
+                  "Shellcode": 649,
+                  "Backdoor": 1059,
+                  "Worms": 71,
+                  "Analysis": 954
+                }
+              },
+              "val": {
+                "graphs": 1434,
+                "first_row": 1673250,
+                "end_row_exclusive": 2032000,
+                "unique_flow_class_counts": {
+                  "Benign": 334368,
+                  "Exploits": 8641,
+                  "Fuzzers": 5625,
+                  "Generic": 3112,
+                  "Reconnaissance": 3607,
+                  "DoS": 1588,
+                  "Analysis": 680,
+                  "Backdoor": 687,
+                  "Shellcode": 400,
+                  "Worms": 42
+                }
+              },
+              "test": {
+                "graphs": 1432,
+                "first_row": 2032000,
+                "end_row_exclusive": 2390250,
+                "unique_flow_class_counts": {
+                  "Benign": 332072,
+                  "Exploits": 8694,
+                  "Fuzzers": 5940,
+                  "Generic": 4881,
+                  "Reconnaissance": 3557,
+                  "DoS": 1589,
+                  "Shellcode": 378,
+                  "Analysis": 665,
+                  "Backdoor": 423,
+                  "Worms": 51
+                }
+              }
+            }
+          },
+          "mapping": {
+            "0": "Analysis",
+            "1": "Backdoor",
+            "2": "Benign",
+            "3": "DoS",
+            "4": "Exploits",
+            "5": "Fuzzers",
+            "6": "Generic",
+            "7": "Reconnaissance",
+            "8": "Shellcode",
+            "9": "Worms"
+          },
+          "benign_multiclass_ids": [
+            "2"
+          ],
+          "scaler": {
+            "n_features": 39,
+            "order_matches_converter": true,
+            "finite_mean_scale": true,
+            "clip_order_matches": true,
+            "samples_seen": 1673192
+          },
+          "heavy_artifacts_not_loaded": [
+            "test_graphs.pt",
+            "train_graphs_shard0.pt",
+            "train_graphs_shard1.pt",
+            "train_graphs_shard2.pt",
+            "train_graphs_shard3.pt",
+            "val_graphs.pt"
+          ]
+        }
+      }
+    },
+    "legacy_checkpoints": {
+      "status": "passed",
+      "seconds": 7.397666199947707,
+      "result": {
+        "nf-cse-cic-ids2018-v2": {
+          "status": "passed",
+          "graph_nodes": 189,
+          "edges": 128,
+          "output_shape": [
+            128,
+            2
+          ],
+          "binary_labels": [
+            0,
+            1
+          ],
+          "scope": "strict weights reload + bounded forward only; no test evaluation"
+        },
+        "nf-unsw-nb15-v2": {
+          "status": "passed",
+          "graph_nodes": 226,
+          "edges": 128,
+          "output_shape": [
+            128,
+            2
+          ],
+          "binary_labels": [
+            0,
+            1
+          ],
+          "scope": "strict weights reload + bounded forward only; no test evaluation"
+        }
+      }
+    },
+    "synthetic_train_xai": {
+      "status": "passed",
+      "seconds": 0.29040039994288236,
+      "result": {
+        "status": "passed",
+        "scope": "synthetic compatibility only; not multiclass NIDS performance",
+        "device": "cpu",
+        "graphs": 24,
+        "epochs": 2,
+        "epoch_seconds": [
+          0.1022825000109151,
+          0.052169600035995245
+        ],
+        "loss": [
+          1.1073205421368282,
+          1.0472357049584389
+        ],
+        "reload_max_abs_error": 0.0,
+        "checkpoint_bytes": 56909,
+        "xai": {
+          "algorithm": "GNNExplainer",
+          "epochs": 20,
+          "seconds": 0.0775672000600025,
+          "edge_mask_shape": [
+            8
+          ],
+          "node_mask_shape": [
+            5,
+            43
+          ],
+          "target_edge_index": 0,
+          "target_class": 0,
+          "zero_vs_one_message_mask_logit_delta": 0.06271490454673767,
+          "edge_attr_gradient_l1": 0.8075544238090515,
+          "direct_edge_path_control_passed": true,
+          "limitation": "x fixed; no IG/Captum, no fidelity benchmark or trained-model explanation"
+        },
+        "cuda_peak_allocated_bytes": null
+      }
+    },
+    "synthetic_stream": {
+      "status": "passed",
+      "seconds": 0.012193900067359209,
+      "result": {
+        "status": "passed",
+        "scope": "synthetic TSV + converter + exact reader definition; no live network",
+        "converter_features": 39,
+        "buffer_matches_offline": true,
+        "old_rows_skipped": true,
+        "new_row_read": true,
+        "rotation_live": "not tested; current reader has no reopen logic",
+        "continuous_service": "not tested; FastAPI not installed locally"
+      }
+    },
+    "real_multiclass_pilot": {
+      "status": "passed",
+      "seconds": 0.39280540007166564,
+      "result": {
+        "status": "passed",
+        "scope": "real prefix pilot; no held-out evaluation; not a deployable model",
+        "source": "D:\\GNN-NIDS_TTTN\\data\\processed\\nf-cse-cic-ids2018-v2\\full_chronological.parquet",
+        "rows": 1536,
+        "graphs": 24,
+        "edges_per_graph": 64,
+        "hidden_dim": 128,
+        "num_output_classes": 15,
+        "observed_class_ids": [
+          0,
+          1,
+          2,
+          4,
+          6,
+          7,
+          8,
+          10,
+          11,
+          12,
+          14
+        ],
+        "source_preprocessing": "legacy scaler; not leakage-corrected graduation pipeline",
+        "epochs": 2,
+        "device": "cpu",
+        "epoch_seconds": [
+          0.099862499977462,
+          0.11247309995815158
+        ],
+        "loss": [
+          1.0198933069283764,
+          0.21249107884553572
+        ],
+        "sampled_peak_process_rss_bytes": 594096128,
+        "cuda_peak_allocated_bytes": null,
+        "reload_max_abs_error": 0.0,
+        "checkpoint_bytes": 512953,
+        "warning": "64-flow pilot differs from 2000-flow training windows; do not extrapolate full runtime"
+      }
+    }
+  },
+  "source_sha256": {
+    "scripts/phase00_audit.py": "62593c0a67ee4944501ab5a3b91f53180ac6e32e1d03a0281ad76a286fdfeb3a",
+    "src/api/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/api/infer.py": "a04d34e851e006209f702c95c62fd55e9a87b1f758a69743f5b3f650174f9076",
+    "src/api/realtime_server.py": "30c768508d36d7e1609d3b439cd3daca16f9a11c6a0d7d26364ceef81c5c4122",
+    "src/api/window_buffer.py": "1d9d9630154c76b33905f21c93b85c70133e6f0ca4d2b33d96c53e3b4be9fb40",
+    "src/api/zeek_convert.py": "a5ca77b397754a8478f4522fa737dc0aebedf43ebdaba83afc17cfe4736f100f",
+    "src/etl/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/etl/clean.py": "1e7cae393de777069566d778485bb0008ff69acece0901c2bef6b72cef751764",
+    "src/etl/config.py": "271dd20d56dff54cd8452deb7e696d01f6a84731950434a61708f41df366350d",
+    "src/etl/load.py": "f95399d5e747ba5a86e665314c7d2dfd30c020146c6e7399f45c53d7fb226270",
+    "src/etl/run_etl.py": "3275ea588d30447099ff0337fd266491e8c5134b068c226198a95762f1214b1d",
+    "src/etl/scale.py": "088707ba80bd905569bd1a9f9f875affbab6532fb6bc97f30591ee43dc7213e7",
+    "src/etl/split.py": "0edcf68495afeb9ccec6228946c3a1dc8aad8f1a9c3992dbc1767f354906ca23",
+    "src/graph/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/graph/build_graph.py": "ba839ab5b93bf66c6cadf231840e0deafb7b55c7f34d0151a0a892e896f77c98",
+    "src/graph/config.py": "38243d6026a824b6edea5c2f7fbd18c05fad719d4d693454b48d1be3dbc14a12",
+    "src/graph/edges.py": "ab4e61b698b23cbe848793c3078a32ecddd91d86d8950a674cd16c36ea0f9074",
+    "src/graph/node_features.py": "2efabebcfb060f5c7f2813c5091587897141bffcd04fb32e2e0f20619b7c0462",
+    "src/graph/nodes.py": "6b9f925fef70d80728173bbfbc41b54dc4f79518bf6d92c0d90e2c77728c09c4",
+    "src/graph/run_graph_builder.py": "4dd30d0a1476dce1fefb350cedc4668ea8bede2e5e58469ae665e3bd06b25cb5",
+    "src/graph/tests/test_graph_builder.py": "1d41d82840f40ab6e48008de522b64a6ab0e60461aeff69df3b5c54741813133",
+    "src/graph/windowing.py": "030758cd9d58165384634b8edadda4830250f24bb56b169f50895f06080e420a",
+    "src/models/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/models/baselines.py": "22d908dbebdc9d8c6f5c3b945dab0b643d15de1f17ecaa1a69d85bd8694f99b6",
+    "src/models/config.py": "860d5ef4a68e4a525c17d379708a0b17b4d2fe1931a7923a4b75e8d49a23f34a",
+    "src/models/evaluate_cross_dataset.py": "d861f71eb04ed776bc9e8d787e92a04a2c91898ccbb60e003d7024ce55e7e8a0",
+    "src/models/evaluate_test.py": "1be745b0f23fc3f03e964325b6345cc315791115b9f7a96a1b50487941e985c4",
+    "src/models/gat.py": "1f7f9d5e1cdd6f4454528a8641828ff4b92110c9c9f887fb6c803168fd434524",
+    "src/models/gcn.py": "388c9452d9f89b68295949828916b42606ff75d1dee52ea33068602674af16fc",
+    "src/models/gnn_config.py": "719b326b1425e2fd2559384a0a983d259b98c563f694972867c286d04ff35560",
+    "src/models/graphsage.py": "d419c4eae25887cd6fb4758515b0fb8cf1ca0bab87f10f2b6b9a0c34fd715189",
+    "src/models/metrics.py": "f0f1a97c017f831c083d53b35dac942599500895883cbca23c5ab9446e0c90a5",
+    "src/models/sage_layer.py": "594ec7f803c473f0ce7fa4618ac54788d5d8c49b2c95a0faabac744989ecdea0",
+    "src/models/shard_graphs.py": "c24aae4ae42fe04fbaafc325cb53c203823cdab43563a2d2d4c66b08b3e6041a",
+    "src/models/train_baseline.py": "f856d39a6b042aebb57365cca037ebe78115ff6ecba4fda5c7b3f806baaf8db8",
+    "src/models/train_gnn.py": "2542601abdb26ba57fd64991586cd31fc086497150309d74a3ee58e0b59a3447",
+    "src/models/train_gnn_transfer.py": "2f8dc0f694576baa8096ee26bfd02cfdbd54d854916b1e9401c58bfc9c86911e"
+  },
+  "packages": {
+    "torch": "2.13.0+cpu",
+    "torch-geometric": "2.8.0",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1",
+    "pyarrow": "20.0.0",
+    "captum": null,
+    "fastapi": null,
+    "psutil": "7.2.2"
+  },
+  "tools": {
+    "zeek": null,
+    "zeekctl": null,
+    "nvidia-smi": "C:\\Windows\\system32\\nvidia-smi.EXE"
+  },
+  "memory": {
+    "total_bytes": 16890978304,
+    "available_start_bytes": 3144151040
+  },
+  "rss_after_section_bytes": 594776064
+}
