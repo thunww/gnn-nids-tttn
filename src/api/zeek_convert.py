@@ -1,6 +1,6 @@
 """Phase D: chuyen 1 dong Zeek conn.log -> 39 cot dac trung NetFlow V2 + 4 cot dinh danh.
 
-Xem docs/graphsage/05_demo_realtime_setup.md muc 6 cho boi canh day du va bang anh xa.
+Xem docs/README.md cho tong quan luong chuyen doi dac trung.
 Zeek khong xuat het 39 cot NetFlow V2 (thieu TTL, histogram kich thuoc goi, TCP window...) --
 cac cot khong the tinh duoc dung "0" (dung khi 0 la gia tri hop ly, vd RETRANSMITTED_*, DNS_*)
 hoac trung binh cua tap train sau khi clip (lay truc tiep tu scaler.mean_, dung khi 0 se la

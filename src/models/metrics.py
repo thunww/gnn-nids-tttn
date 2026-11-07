@@ -9,11 +9,11 @@ from sklearn.metrics import (
 
 
 def compute_full_metrics(y_true, y_pred, y_proba=None) -> dict:
-    """Tinh du 6 chi so danh gia theo docs/00_research_plan.md muc 6.1: Accuracy (tham khao),
+    """Tinh du 6 chi so danh gia theo docs/README.md, phan danh gia: Accuracy (tham khao),
     Precision (macro), Recall (macro), F1-macro (chinh), AUC-ROC, MCC.
 
     y_proba: xac suat du doan cho lop duong (nhan=1), mang 1 chieu -- can de tinh AUC-ROC.
-    Bai toan hien tai la nhi phan (xem docs/decisions.md 2026-07-26); ham nay CHUA ho tro
+    Bai toan hien tai la nhi phan (xem docs/README.md); ham nay CHUA ho tro
     AUC-ROC da lop (can doi sang "one-vs-rest" neu sau nay quay lai da lop).
     """
     metrics = {

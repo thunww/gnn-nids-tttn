@@ -28,12 +28,12 @@ from models.gnn_config import EDGE_FEATURE_DIM, HIDDEN_DIM, HIDDEN_DIM_BY_DATASE
 from models.graphsage import GraphSAGEEdgeClassifier
 from models.metrics import compute_full_metrics
 
-# Thi nghiem 2 (TN2, docs/00_research_plan.md muc 6.3): danh gia model da train tren bo
+# Thi nghiem 2 (TN2, docs/README.md, TN2): danh gia model da train tren bo
 # NGUON, KHONG train/tinh chinh gi them, chay thang tren tap test cua bo DICH -- kiem tra
 # kha nang tong quat hoa thuc su sang moi truong mang khac. Ap lai dung scaler+upper_bound
 # cua bo NGUON len du lieu bo DICH (thay vi de bo dich tu scale rieng theo thong ke cua no)
 # de tach dung "khac biet moi truong that" khoi "nhieu do lech cong thuc scale" -- xem
-# docs/decisions.md muc 2026-07-27.
+# docs/README.md.
 
 
 def feature_columns(df: pd.DataFrame) -> list[str]:

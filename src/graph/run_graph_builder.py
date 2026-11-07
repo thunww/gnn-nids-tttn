@@ -47,7 +47,7 @@ def run(processed_dir: Path, num_workers: int | None = None, folder_names: list[
 
         print(f"  tong so do thi con: {len(graphs)}")
 
-        # 2026-07-31: SUA LOI RO RI DU LIEU nghiem trong -- xem docs/decisions.md.
+        # 2026-07-31: SUA LOI RO RI DU LIEU nghiem trong -- xem docs/README.md.
         # Cua so lien tiep CHONG LAP 50% (WINDOW_OVERLAP=0.5, xem graph/windowing.py) --
         # cua so i va i+1 dung chung ~50% flow. Truoc day dung train_test_split() xao tron
         # NGAU NHIEN danh sach do thi roi moi chia -- do bang chung: 46.2% cap cua so lien ke

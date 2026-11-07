@@ -1,5 +1,5 @@
 """Phase F: FastAPI server -- tail conn.log, gom cua so flow, suy luan GraphSAGE, day ket qua
-real-time ra trinh duyet qua WebSocket. Xem docs/graphsage/05_demo_realtime_setup.md muc 8.
+real-time ra trinh duyet qua WebSocket. Xem docs/README.md, phan demo va lenh chay.
 
 Chay: venv/bin/python -m uvicorn api.realtime_server:app --host 0.0.0.0 --port 8000
 (chay tu thu muc src/, hoac them src/ vao PYTHONPATH).
@@ -32,7 +32,7 @@ DATASET = "nf-cse-cic-ids2018-v2"
 POLL_INTERVAL = 0.5  # giay -- tan suat kiem tra dong moi khi conn.log tam thoi khong co gi moi
 WINDOW_SIZE = WINDOW_SIZE_BY_DATASET[DATASET]
 
-# So do mang demo (xem docs/graphsage/05_demo_realtime_setup.md muc 4.1) -- dung de: (1) loc bo
+# So do mang demo (xem docs/README.md, phan mang demo) -- dung de: (1) loc bo
 # traffic vao chinh trang demo nay (gay nhieu, xem _is_dashboard_traffic), (2) hien chu thich
 # vai tro IP tren giao dien cho de doc ket qua.
 MONITOR_IP = "192.168.207.200"

@@ -58,7 +58,7 @@ def count_and_collect_labels(shard_paths: list[Path]) -> tuple[int, torch.Tensor
     """Duyet 1 luot qua cac shard train de dem tong so do thi va gom nhan (y) -- dung de tinh
     so lop va class weights ma KHONG can giu ca danh sach Data trong RAM cung luc (moi luc chi
     1 shard, giai phong ngay sau khi lay xong nhan). Day la buoc chinh giup train tren Colab
-    free (~12-13GB RAM) khong bi OOM voi bo dac trung node 43 chieu -- xem docs/decisions.md.
+    free (~12-13GB RAM) khong bi OOM voi bo dac trung node 43 chieu -- xem docs/README.md.
     """
     total = 0
     label_chunks = []
@@ -211,7 +211,7 @@ def train_one_model(
         total_loss = 0.0
         # Nap tung shard vao RAM, train het batch cua shard do roi giai phong ngay, thay vi
         # giu toan bo train_graphs trong RAM suot qua trinh train (xem shard_graphs.py,
-        # docs/decisions.md). Xao thu tu shard moi epoch de gan voi shuffle toan cuc hon.
+        # docs/README.md). Xao thu tu shard moi epoch de gan voi shuffle toan cuc hon.
         shard_order = train_shard_paths.copy()
         random.shuffle(shard_order)
         for shard_path in shard_order:
@@ -288,7 +288,7 @@ def run(processed_dir: Path, output_dir: Path | None = None, folder_names: list[
             print(f"  HIDDEN_DIM rieng cho bo nay: {hidden_dim} (mac dinh {HIDDEN_DIM})")
 
         models = {
-            # 2026-07-26: chi con GraphSAGE (bo GCN/GAT) -- xem docs/decisions.md.
+            # 2026-07-26: chi con GraphSAGE (bo GCN/GAT) -- xem docs/README.md.
             "graphsage": GraphSAGEEdgeClassifier(
                 NODE_FEATURE_DIM, EDGE_FEATURE_DIM, hidden_dim, num_classes, NUM_LAYERS, DROPOUT_GCN
             ),

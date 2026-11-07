@@ -7,7 +7,7 @@ class EGraphSAGEConv(MessagePassing):
     """E-GraphSAGE (Lo et al., 2021, arXiv:2103.16329) -- SAGEConv cua PyG khong ho tro
     edge_dim nen phai tu viet: message tu hang xom v ket hop CA dac trung canh noi v->u
     (khac GraphSAGE goc chi dung dac trung node), sum lai roi cap nhat embedding u.
-    Cong thuc dung dung docs/graphsage_plan.md muc 3:
+    Lop truyen thong diep (tong quan: docs/README.md):
         message: phi(x_v, e_vu) = W1 . [x_v ; e_vu]
         aggregate: a = sum_{v in N(u)} phi_v
         update: h_u = sigma(W2 . [x_u ; a])

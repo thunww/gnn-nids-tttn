@@ -158,7 +158,7 @@ def fig2_confusion_matrices():
 
 
 def fig3_tn2_heatmap():
-    # Du lieu that, da co san trong docs/graphsage/03_ket_qua.md (Thi nghiem 2)
+    # Du lieu that, da co san trong docs/README.md (Thi nghiem 2)
     rows = ["CSE-CIC → UNSW-NB15", "UNSW-NB15 → CSE-CIC"]
     cols = ["Random Forest", "XGBoost", "E-GraphSAGE"]
 

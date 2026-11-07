@@ -34,7 +34,7 @@ def aggregate_edge_features_per_node(edge_index: np.ndarray, edge_attr: np.ndarr
     gi ve NOI DUNG luong mang that (byte, thoi luong...) di qua no. Nghien cuu (N2V-EGS-PCA,
     arXiv:2404.10800) xac nhan "bo dac trung day du gom ca canh lan node" la yeu to quan
     trong nhat de dat F1-macro cao. Node2Vec/line-graph (cach lam giau node "chuan" hon trong
-    tai lieu) khong kha thi trong pipeline theo-cua-so hien tai (xem docs/decisions.md) --
+    tai lieu) khong kha thi trong pipeline theo-cua-so hien tai (xem docs/README.md) --
     day la cach thay the thuc te: tinh trung binh truc tiep, khong can huan luyen gi them.
 
     Tra ve mang shape (num_nodes, so_dac_trung_canh).

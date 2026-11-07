@@ -24,7 +24,7 @@ from models.gnn_config import (
 from models.graphsage import GraphSAGEEdgeClassifier
 from models.metrics import compute_full_metrics
 
-# CHI chay 1 lan duy nhat cho ket qua chinh thuc (docs/00_research_plan.md muc 4.1) -- script
+# CHI chay 1 lan duy nhat cho ket qua chinh thuc (docs/README.md, TN1) -- script
 # nay CHI doc model + tap test da co san, KHONG train/tinh chinh gi.
 
 

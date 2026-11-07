@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sinh traffic nen (nhieu flow ngan, da dang: TCP/UDP/ICMP) giua cac may trong mang ao demo,
 dung de lam day nhanh cua so 2000 flow/cua so ma model can de suy luan 1 lan (xem
-docs/graphsage/05_demo_realtime_setup.md muc 6.5 -- ly do can script nay).
+docs/README.md -- luong demo theo cua so).
 
 Chay tren may attacker HOAC victim (khong phai monitor 192.168.207.200), nham vao (các) may
 con lai trong mang ao -- moi lan ket noi/gui goi la 1 flow moi (Zeek gan uid rieng).

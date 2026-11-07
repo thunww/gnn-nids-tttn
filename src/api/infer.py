@@ -1,7 +1,7 @@
 """Phase E: nap model GraphSAGE 1 lan luc khoi dong, suy luan cho 1 cua so flow.
 
 Tai su dung dung pattern nap model tu evaluate_graphsage() (src/models/evaluate_test.py) --
-KHONG doan lai kien truc/sieu tham so, xem docs/graphsage/05_demo_realtime_setup.md muc 5.
+KHONG doan lai kien truc/sieu tham so, xem docs/README.md, phan suy luan.
 """
 
 from __future__ import annotations

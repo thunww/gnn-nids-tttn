@@ -1,6 +1,6 @@
 #!/bin/bash
 # Cai dat cac dich vu can thiet tren may VICTIM (192.168.207.199) de co du lieu that cho 5
-# kich ban tan cong Phase B/C. Xem docs/graphsage/05_demo_realtime_setup.md muc 4.3.
+# kich ban tan cong Phase B/C. Xem docs/README.md, phan kich ban demo.
 #
 # Chay tren chinh may victim:
 #   sudo bash scripts/victim_setup.sh

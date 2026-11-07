@@ -11,7 +11,7 @@ from models.gnn_config import DEFAULT_PROCESSED_DIR
 
 # So do thi/shard cho tap train -- muc tieu moi shard ~1.5-2GB de nap an toan tren RAM Colab
 # free (~12-13GB). Chi chia tap train (duoc doc lai nhieu lan/epoch); tap val nho hon nhieu
-# va chi doc 1 lan/epoch nen giu nguyen ca file. Xem docs/decisions.md ("chia shard du lieu do thi").
+# va chi doc 1 lan/epoch nen giu nguyen ca file. Xem docs/README.md ("chia shard du lieu do thi").
 GRAPHS_PER_SHARD = 2_200
 
 
