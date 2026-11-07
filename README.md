@@ -1,25 +1,21 @@
-# GNN-NIDS — Nghiên cứu và ứng dụng mạng nơ-ron đồ thị phát hiện xâm nhập mạng
+# GNN-NIDS — Phát hiện xâm nhập mạng bằng E-GraphSAGE
 
 Thực tập tốt nghiệp — D22CQAT01-N, PTIT. Sinh viên: Trần Gia Thân (N22DCAT050), Trần Xuân Đông (N22DCAT018).
-Tài liệu định hướng đầy đủ: [`docs/00_research_plan.md`](docs/00_research_plan.md).
 
-## Cấu trúc thư mục
+Phân loại luồng mạng **Benign/Attack** bằng E-GraphSAGE, so sánh với Random Forest và XGBoost trên NF-CSE-CIC-IDS2018-v2 và NF-UNSW-NB15-v2; demo phát hiện brute-force FTP/SSH từ log Zeek.
 
-```
-docs/            Tài liệu định hướng + nhật ký tiến độ từng giai đoạn (docs/phases/)
-data/raw/        Dữ liệu gốc, không chỉnh sửa tay
-data/processed/  Dữ liệu sau ETL / đồ thị đã build (Parquet)
-src/             Mã nguồn: etl, graph, models, training, evaluation, explainability, api
-notebooks/       Bản sao lưu notebook Colab
-configs/         Cấu hình experiment (yaml/json)
-results/         Bảng/biểu đồ kết quả đã tổng hợp, dùng cho báo cáo
-Nhom_A05/        Báo cáo LaTeX (giữ nguyên cấu trúc gốc, không di chuyển/đổi tên)
-```
+Xem [mục tiêu, flow đầy đủ, kết quả và thứ tự chạy](docs/README.md). Tài liệu được rút gọn theo phần đã thực hiện trong [báo cáo PDF](NguyenHoangThanh_A05_BCCK.pdf).
 
-## Quy trình cập nhật tiến độ
+Phần phát triển đồ án tốt nghiệp: [kế hoạch 8 tuần, các phase và tài liệu tham khảo](docs/do_an/README.md).
 
-Mỗi giai đoạn (1-6) có một file trong `docs/phases/`. Khi hoàn thành hoặc có tiến triển ở một giai đoạn, cập nhật trực tiếp vào file tương ứng (nhật ký + đầu ra kiểm chứng được), không dồn vào cuối.
-
-## Lưu ý dữ liệu
-
-Xem cảnh báo về schema bộ UNSW-NB15 tại [`data/raw/README.md`](data/raw/README.md) — cần bộ NF-UNSW-NB15-v2 (NetFlow V2) chứ không phải bản gốc trước khi triển khai Graph Builder.
+| Thư mục | Nội dung |
+|---|---|
+| `src/etl/` | Làm sạch, chia bảng và chuẩn hóa dữ liệu |
+| `src/graph/` | Dựng đồ thị IP:port theo cửa sổ trượt |
+| `src/models/` | Huấn luyện E-GraphSAGE, baseline và đánh giá |
+| `src/api/` | Đọc log Zeek, suy luận và dashboard thời gian thực |
+| `data/` | Dữ liệu thô, dữ liệu xử lý và mô hình đã lưu |
+| `scripts/` | Script hỗ trợ lab và tạo hình báo cáo |
+| `notebooks/` | Notebook chạy trên Colab |
+| `report_figures/` | Hình minh họa báo cáo |
+| `Nhom_A05/` | Nguồn báo cáo LaTeX |

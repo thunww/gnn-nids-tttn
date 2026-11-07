@@ -1,3 +1,3 @@
 # results
 
-Bảng/biểu đồ kết quả thực nghiệm đã tổng hợp (không phải raw MLflow logs), dùng trực tiếp cho báo cáo (`Nhom_A05/`) — mỗi hình/bảng nên khớp với số liệu trong `docs/phases/phase4_experiments_xai.md`.
+Số liệu đã báo cáo được tóm tắt tại [docs/README.md](../docs/README.md). Khi chạy đánh giá, mã nguồn xuất `data/processed/test_metrics.csv` (TN1) và `data/processed/cross_dataset_metrics.csv` (TN2). Hình minh họa báo cáo nằm trong `report_figures/`.

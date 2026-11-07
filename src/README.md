@@ -1,11 +1,18 @@
-# src
+# Mã nguồn GNN-NIDS
 
-Mã nguồn dự án, chia theo giai đoạn trong `docs/00_research_plan.md`:
+Mục tiêu, luồng xử lý, kết quả và lệnh chạy được tổng hợp tại [docs/README.md](../docs/README.md), theo báo cáo PDF.
 
-- **etl/** — load, làm sạch, mã hoá, chuẩn hoá, chia tập 70/15/15 (stratified) cho NF-CSE-CIC-IDS2018-v2 và NF-UNSW-NB15-v2. Output ghi vào `data/processed/`. (Giai đoạn 1)
-- **graph/** — Graph Builder: bảng → đồ thị (IP:port = node, flow = edge có hướng), đặc trưng cấu trúc node (in/out-degree, PageRank, clustering coefficient), sliding window 50% overlap, kèm unit test. (Giai đoạn 2)
-- **models/** — kiến trúc GCN, GAT, GraphSAGE (điều kiện), baseline Random Forest/XGBoost. Bài toán edge classification. (Giai đoạn 3)
-- **training/** — training loop, Optuna, MLflow tracking (trỏ Google Drive), checkpoint mỗi epoch. (Giai đoạn 3)
-- **evaluation/** — metrics (F1-macro là chỉ số chính, Precision/Recall, AUC-ROC, MCC), Thí nghiệm 1 (within-dataset), Thí nghiệm 2 (cross-dataset), kiểm định McNemar. (Giai đoạn 4)
-- **explainability/** — GNNExplainer cho mô hình tốt nhất. (Giai đoạn 4)
-- **api/** — dịch vụ dự đoán phục vụ demo real-time (Giai đoạn 5, xem `docs/graphsage/05_demo_realtime_setup.md`): `zeek_convert.py` (Zeek conn.log → 39 cột NetFlow V2), `window_buffer.py` (gom flow thành cửa sổ trượt), `infer.py` (nạp model 1 lần, suy luận theo cửa sổ), `realtime_server.py` (FastAPI + WebSocket, giao diện demo).
+| Module | Vai trò trong luồng đã triển khai |
+|---|---|
+| `etl/run_etl.py` | CSV → bảng đã làm sạch/chuẩn hóa, scaler và ngưỡng clip |
+| `graph/run_graph_builder.py` | Bảng giữ thứ tự gốc → đồ thị cửa sổ trượt → train/val/test |
+| `models/shard_graphs.py` | Chia tập đồ thị train thành shard để giảm RAM |
+| `models/train_baseline.py` | Huấn luyện Random Forest và XGBoost trên bảng |
+| `models/train_gnn.py` | Huấn luyện E-GraphSAGE và lưu checkpoint tốt nhất |
+| `models/evaluate_test.py` | TN1: đánh giá trên tập test cùng bộ dữ liệu |
+| `models/evaluate_cross_dataset.py` | TN2: đánh giá chéo hai bộ dữ liệu |
+| `models/metrics.py` | Tính sáu chỉ số đánh giá dùng chung |
+| `api/zeek_convert.py` | Chuyển Zeek conn.log sang đặc trưng đầu vào |
+| `api/window_buffer.py` | Gom flow thành cửa sổ chồng lấp |
+| `api/infer.py` | Nạp mô hình và dự đoán nhãn/xác suất Attack |
+| `api/realtime_server.py` | Đọc log mới, điều phối suy luận, phục vụ dashboard/WebSocket |
