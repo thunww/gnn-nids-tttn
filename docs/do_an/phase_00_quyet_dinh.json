@@ -1,0 +1,45 @@
+{
+  "status": "phase00_local_reviewed_colab_pending_lab_skipped_by_user",
+  "review_date": "2026-10-24",
+  "schedule_weeks": 8,
+  "training_platform": "Google Colab",
+  "primary_dataset": "nf-cse-cic-ids2018-v2",
+  "secondary_dataset": "nf-unsw-nb15-v2",
+  "dataset_version": "v2",
+  "v3_decision": "defer; both V2 raw datasets already present; no absolute timestamp in actual CSV schema",
+  "tasks": ["binary", "multiclass"],
+  "models": ["random_forest", "xgboost", "e_graphsage"],
+  "label_policy": "native Attack taxonomy per dataset; lock mapping and benign_class_id in each bundle",
+  "observed_label_inventory": {
+    "nf-cse-cic-ids2018-v2": {"num_classes": 15, "benign_class_id_in_legacy_mapping": 0},
+    "nf-unsw-nb15-v2": {"num_classes": 10, "benign_class_id_in_legacy_mapping": 2}
+  },
+  "split_policy_for_phase01": {
+    "type": "source_order_blocks_shared_by_baseline_and_gnn",
+    "ratios": [0.7, 0.15, 0.15],
+    "timestamps_verified": false,
+    "scaler_fit": "unique training flows only after shared split",
+    "windows": "built independently inside each split; preserve flow identity",
+    "validation_required": "audit duplicate/session overlap and class support; save manifest before training"
+  },
+  "feature_profiles": {
+    "netflow_full_v2": {"status": "schema_observed", "edge_features": 39, "node_features": 43},
+    "zeek_shared_v1": {
+      "status": "candidate_not_parity_verified",
+      "candidate_features": ["PROTOCOL", "IN_BYTES", "IN_PKTS", "OUT_BYTES", "OUT_PKTS", "FLOW_DURATION_MILLISECONDS"],
+      "activation_gate": "confirm exporter semantics, units, direction and missing-value behavior; retrain exact profile"
+    }
+  },
+  "initial_window_sizes": {"nf-cse-cic-ids2018-v2": 2000, "nf-unsw-nb15-v2": 500},
+  "initial_overlap": 0.5,
+  "xai": {
+    "structure": "GNNExplainer, synthetic edge-output compatibility passed",
+    "edge_features": "Integrated Gradients planned; Captum not installed or validated locally",
+    "limitations": "must cover direct edge_attr and dependent node aggregates in phase03"
+  },
+  "scenarios_planned": ["ftp_bruteforce", "ssh_bruteforce", "port_scan", "http_dos_or_labelled_replay"],
+  "lab_review_at_phase00": "skipped_at_user_request; no live evidence or feature parity claim",
+  "colab_budget_gate": "real window pilot at batch 8/16/32, peak RAM/VRAM, checkpoint reload, then choose run budget; no full-runtime estimate from 64-flow CPU pilot",
+  "preserve_legacy_artifacts": true,
+  "production_training_changes_in_phase00": false
+}
