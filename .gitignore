@@ -1,6 +1,7 @@
 # Data (nặng, không version control — nguồn thật nằm ở Google Drive)
 data/raw/**
 data/processed/**
+data/processed_v2*/**
 !data/raw/README.md
 !data/processed/README.md
 
