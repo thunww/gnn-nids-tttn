@@ -17,9 +17,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import joblib
+import numpy as np
 import pandas as pd
 
-from etl.config import ATTACK_COL, DATASETS, DEFAULT_RAW_DIR, LABEL_COL
+from etl.config import ATTACK_COL, DATASETS, DEFAULT_RAW_DIR, IDENTIFIER_COLS, LABEL_COL
 from etl.protocol import (
     FLOW_ID_COL,
     PURGED,
@@ -30,9 +31,11 @@ from etl.protocol import (
     block_split,
     build_label_mapping,
     class_support,
+    cross_split_overlap,
     encode_target,
     feature_columns,
     fit_preprocessor,
+    novel_flow_ids,
     transform,
 )
 from graph.config import WINDOW_SIZE_BY_DATASET
@@ -40,22 +43,101 @@ from graph.config import WINDOW_SIZE_BY_DATASET
 DEFAULT_OUT = Path("data/processed_v2")
 
 
+def _count_rows(path: Path) -> int:
+    """So dong du lieu (khong tinh header) bang cach dem ky tu xuong dong -- khong nap file vao RAM."""
+    n = 0
+    with open(path, "rb") as f:
+        while block := f.read(1 << 26):
+            n += block.count(b"\n")
+    return max(n - 1, 0)
+
+
+def read_raw(path: Path, max_rows: int | None, chunk_rows: int = 1_000_000) -> pd.DataFrame:
+    """Doc CSV theo khoi vao mang cap phat TRUOC (dinh RAM ~ kich thuoc bang cuoi, khong nhan doi).
+
+    Dac trung float32 (mot khoi lien tuc), cong int32, Label int8, IP va Attack ma hoa thanh
+    category bang bang tra tang dan. Gia tri nguyen > 2^24 bi lam tron o float32 (khong anh huong
+    sau khi clip + chuan hoa); viec phat hien dong trung dua tren gia tri float32.
+    """
+    cols = list(pd.read_csv(path, nrows=0).columns)
+    ip_cols = ["IPV4_SRC_ADDR", "IPV4_DST_ADDR"]
+    port_cols = ["L4_SRC_PORT", "L4_DST_PORT"]
+    feats = [c for c in cols if c not in IDENTIFIER_COLS + [LABEL_COL, ATTACK_COL]]
+    n = _count_rows(path)
+    if max_rows:
+        n = min(n, max_rows)
+
+    feat = np.empty((n, len(feats)), dtype="float32")
+    ports = {c: np.empty(n, dtype="int32") for c in port_cols}
+    label = np.empty(n, dtype="int8")
+    codes = {c: np.empty(n, dtype="int32") for c in ip_cols + [ATTACK_COL]}
+    vocab = {c: {} for c in codes}
+
+    dtype = {c: "float32" for c in feats} | {c: "int32" for c in port_cols} | {LABEL_COL: "int8"}
+    pos = 0
+    for chunk in pd.read_csv(path, dtype=dtype, chunksize=chunk_rows, nrows=n, low_memory=False):
+        m = len(chunk)
+        feat[pos : pos + m] = chunk[feats].to_numpy(dtype="float32")
+        for c in port_cols:
+            ports[c][pos : pos + m] = chunk[c].to_numpy()
+        label[pos : pos + m] = chunk[LABEL_COL].to_numpy()
+        for c in codes:
+            inv, uniq = pd.factorize(chunk[c].astype(str))
+            table = vocab[c]
+            glob = np.fromiter((table.setdefault(u, len(table)) for u in uniq), dtype="int32", count=len(uniq))
+            codes[c][pos : pos + m] = glob[inv]
+        pos += m
+        del chunk
+    assert pos == n, f"doc {pos} dong, ky vong {n}"
+
+    df = pd.DataFrame(feat, columns=feats, copy=False)
+    df[LABEL_COL] = label  # thu tu cot cuoi cung giong CSV: ids, dac trung, Label, Attack
+    df[ATTACK_COL] = pd.Categorical.from_codes(codes[ATTACK_COL], categories=list(vocab[ATTACK_COL]))
+    for i, c in enumerate([ip_cols[0], port_cols[0], ip_cols[1], port_cols[1]]):
+        arr = (
+            pd.Categorical.from_codes(codes[c], categories=list(vocab[c])) if c in ip_cols else ports[c]
+        )
+        df.insert(i, c, arr)
+    return df
+
+
+def _mem(tag: str) -> None:
+    """In RSS hien tai (GB) neu cai psutil -- giup do dinh RAM tung buoc tren Colab."""
+    try:
+        import psutil
+
+        print(f"  [mem] {tag}: {psutil.Process().memory_info().rss / 2**30:.2f} GB")
+    except ImportError:
+        pass
+
+
 def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None) -> dict:
     filename = DATASETS[dataset]
     out_dir = out_root / dataset
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(raw_dir / dataset / filename, nrows=max_rows)
+    df = read_raw(raw_dir / dataset / filename, max_rows)
     n_raw = len(df)
-    df[ATTACK_COL] = df[ATTACK_COL].astype(str)
+    _mem("after_read")
 
     # flow_id = vi tri dong trong CSV goc, tinh TRUOC khi loc -> moi dong bi bo deu truy vet duoc.
-    df.insert(0, FLOW_ID_COL, range(n_raw))
+    df.insert(0, FLOW_ID_COL, np.arange(n_raw, dtype="int64"))
     dedup_cols = [c for c in df.columns if c != FLOW_ID_COL]
-    n_dup = int(df.duplicated(subset=dedup_cols).sum())
-    df = df.drop_duplicates(subset=dedup_cols)
-    n_na = int(df.isna().any(axis=1).sum())
-    df = df.dropna().reset_index(drop=True)
+    # Chi sao chep bang khi that su co dong can bo (tranh nhan doi RAM voi ~19 trieu dong).
+    # Phat hien trung bang hash 64-bit tung dong (duplicated() cua pandas giu ma nhom cho ca 47 cot
+    # => hang GB voi 19 trieu dong). Xac suat va cham giua 2 dong khac nhau ~ N^2/2^65, bo qua duoc.
+    row_hash = pd.util.hash_pandas_object(df[dedup_cols], index=False).to_numpy()
+    keep = ~pd.Series(row_hash).duplicated().to_numpy()
+    del row_hash
+    n_dup = int((~keep).sum())
+    if n_dup:
+        df = df[keep]
+    na_rows = df.isna().any(axis=1).to_numpy()
+    n_na = int(na_rows.sum())
+    if n_na:
+        df = df[~na_rows]
+    df = df.reset_index(drop=True)
+    _mem("after_clean")
     print(f"[{dataset}] raw={n_raw} duplicate={n_dup} missing={n_na} giu={len(df)}")
 
     # Nhan: mapping khoa tu ten nhan, luu ca 2 task.
@@ -67,17 +149,25 @@ def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None
 
     # Split chung theo khoi lien tuc; gap = 1 cua so de khong co phien/cua so nao qua ranh gioi.
     window_size = WINDOW_SIZE_BY_DATASET[dataset]
-    df[SPLIT_COL] = block_split(len(df), gap=window_size)
+    df[SPLIT_COL] = pd.Categorical(block_split(len(df), gap=window_size), categories=[*SPLITS, PURGED])
     assert_disjoint_splits({s: df.loc[df[SPLIT_COL] == s, FLOW_ID_COL].to_numpy() for s in SPLITS})
+    # Dong "purged" van nam trong flows.parquet (split="purged") de truy vet va tiet kiem RAM;
+    # moi noi dung deu loc theo split in (train, val, test) nen chung khong bao gio duoc dung.
     n_purged = int((df[SPLIT_COL] == PURGED).sum())
-    df = df[df[SPLIT_COL] != PURGED].reset_index(drop=True)
 
     # Preprocessing: fit CHI tren train; giu ban raw cua test (chua clip) cho danh gia cheo sau nay.
     train_mask = df[SPLIT_COL] == "train"
-    scaler, upper_bound = fit_preprocessor(df.loc[train_mask], feats)
+    _mem("after_split")
+    scaler, upper_bound = fit_preprocessor(df, feats, mask=train_mask.to_numpy())
+    _mem("after_fit")
     df[df[SPLIT_COL] == "test"].to_parquet(out_dir / "raw_test.parquet", index=False)
-    df = transform(df, feats, scaler, upper_bound)
+    df = transform(df, feats, scaler, upper_bound, inplace=True)
+    _mem("after_transform")
     df.to_parquet(out_dir / "flows.parquet", index=False)
+    _mem("after_parquet")
+
+    novel = novel_flow_ids(df, feats)
+    novel.to_parquet(out_dir / "novel_flow_ids.parquet", index=False)
 
     joblib.dump(scaler, out_dir / "scaler.joblib")
     joblib.dump(upper_bound, out_dir / "upper_bound.joblib")
@@ -88,6 +178,7 @@ def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None
         "clip_quantile": 0.99,
         "window_size": window_size,
         "purge_gap": window_size,
+        "purged_rows_kept_in_parquet": True,
         "split_policy": "block theo thu tu nguon (V2 khong co timestamp tin cay)",
         "label_mappings": mappings,
     }
@@ -106,6 +197,8 @@ def run(dataset: str, raw_dir: Path, out_root: Path, max_rows: int | None = None
         "purged_at_boundaries": n_purged,
         "rows_per_split": {s: int((df[SPLIT_COL] == s).sum()) for s in SPLITS},
         "flow_id_overlap": "0 (da assert_disjoint_splits)",
+        "cross_split_overlap": cross_split_overlap(df, feats),
+        "novel_flows": {s: int((novel[SPLIT_COL] == s).sum()) for s in ("val", "test")},
         "classes_missing_by_split": {
             t: {s: [int(i) for i in tbl.index[tbl[s] == 0]] for s in SPLITS} for t, tbl in support.items()
         },

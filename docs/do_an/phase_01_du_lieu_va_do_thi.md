@@ -1,6 +1,6 @@
 # Phase 01 — Dữ liệu, nhãn và đồ thị dùng chung
 
-**Trạng thái:** đã triển khai một phần (07/11/2026) — xem [báo cáo](../../results/graduation/phase_reports/phase_01.md). **Thời gian:** cuối tuần 1 đến đầu tuần 2.  
+**Trạng thái:** mã nguồn hoàn thành và kiểm chứng trên UNSW (07/11/2026); CSE-CIC chờ chạy trên Colab — xem [báo cáo](../../results/graduation/phase_reports/phase_01.md). **Thời gian:** cuối tuần 1 đến đầu tuần 2.  
 **Phụ thuộc:** phase 00 chốt nguồn dữ liệu; đọc [quy ước](quy_uoc_du_lieu.md).
 
 ## Mục tiêu và cách hiểu

@@ -145,3 +145,62 @@ def test_class_support_reports_absent_class_as_zero():
     t = class_support(df, m)
     dos = t[t["class_name"] == "DoS"].iloc[0]
     assert dos["train"] == 40 and dos["val"] == 0 and dos["test"] == 0
+
+
+def test_cross_split_overlap_detects_identical_rows_and_ip_pairs():
+    from etl.protocol import cross_split_overlap
+
+    df = _flows(100)
+    df[SPLIT_COL] = ["train"] * 60 + ["val"] * 20 + ["test"] * 20
+    df.loc[80:99, ["F_A", "F_B"]] = df.loc[0:19, ["F_A", "F_B"]].to_numpy()  # test = ban sao train
+    out = cross_split_overlap(df, ["F_A", "F_B"])
+    assert out["test"]["identical_feature_rows"] == 20
+    assert out["val"]["identical_feature_rows"] == 0
+    assert out["test"]["ip_pair_seen_in_train_rate"] == 1.0
+
+
+def test_fit_preprocessor_equals_sklearn_reference():
+    from sklearn.preprocessing import StandardScaler
+
+    df = _flows(500, seed=3)
+    df.loc[5, "F_A"] = 1e6
+    feats = ["F_A", "F_B"]
+    mask = np.arange(len(df)) < 350
+    scaler, ub = fit_preprocessor(df, feats, mask=mask)
+
+    train = df[mask]
+    ref_ub = train[feats].quantile(0.99)
+    ref = StandardScaler().fit(train[feats].clip(upper=ref_ub, axis=1))
+    assert np.allclose(ub.to_numpy(), ref_ub.to_numpy())
+    assert np.allclose(scaler.mean_, ref.mean_) and np.allclose(scaler.scale_, ref.scale_)
+
+    got = transform(df, feats, scaler, ub)[feats].to_numpy()
+    want = ref.transform(df[feats].clip(upper=ref_ub, axis=1))
+    assert np.allclose(got, want, atol=1e-4)
+
+
+def test_read_raw_matches_plain_read_csv(tmp_path):
+    from etl.run_etl_v2 import read_raw
+
+    n = 50
+    raw = pd.DataFrame(
+        {
+            "IPV4_SRC_ADDR": [f"10.0.0.{i % 4}" for i in range(n)],
+            "L4_SRC_PORT": np.arange(n) + 1000,
+            "IPV4_DST_ADDR": [f"10.0.1.{i % 3}" for i in range(n)],
+            "L4_DST_PORT": [80] * n,
+            "F_A": np.linspace(0, 5, n),
+            "F_B": np.arange(n) * 3,
+            "Label": [0] * 40 + [1] * 10,
+            "Attack": ["Benign"] * 40 + ["DoS"] * 10,
+        }
+    )
+    path = tmp_path / "x.csv"
+    raw.to_csv(path, index=False)
+    got = read_raw(path, None, chunk_rows=7)  # chunk nho de thu ghep nhieu khoi
+    assert list(got.columns) == list(raw.columns)
+    assert got["IPV4_SRC_ADDR"].astype(str).tolist() == raw["IPV4_SRC_ADDR"].tolist()
+    assert got["Attack"].astype(str).tolist() == raw["Attack"].tolist()
+    assert np.allclose(got[["F_A", "F_B"]].to_numpy(), raw[["F_A", "F_B"]].to_numpy())
+    assert got["L4_SRC_PORT"].tolist() == raw["L4_SRC_PORT"].tolist()
+    assert len(read_raw(path, 20, chunk_rows=7)) == 20
